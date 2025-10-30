@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lbnewtpy"
+version = "0.0.1"
+description = "Lattice Boltzmann Numerical Wave Tank in Python"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Oscar Tovey Garcia", email = "otoveyg@gmail.com" }
+]
+dependencies = [
+  "numpy>=1.28",
+  "scipy>=1.11",
+  "matplotlib==3.10.5",
+  "imageio==2.37.0",
+  "imageio-ffmpeg==0.6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.4",
+  "pytest-cov",
+  "black",
+  "isort",
+  "flake8",
+  "mypy",
+  "pre-commit",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=lbnewtpy --cov-report=term-missing"
+testpaths = ["tests"]
