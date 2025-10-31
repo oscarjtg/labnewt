@@ -3,15 +3,8 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lbnewtpy"
-version = "0.0.1"
-description = "Lattice Boltzmann Numerical Wave Tank in Python"
-readme = "README.md"
-requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [
-  { name = "Oscar Tovey Garcia", email = "otoveyg@gmail.com" }
-]
+name = "labnewt"
+dynamic = ["version"]
 dependencies = [
   "numpy>=1.28",
   "scipy>=1.11",
@@ -19,6 +12,14 @@ dependencies = [
   "imageio==2.37.0",
   "imageio-ffmpeg==0.6.0",
 ]
+requires-python = ">=3.10"
+authors = [
+  { name = "Oscar Tovey Garcia", email = "otoveyg@gmail.com" }
+]
+description = "Lattice Boltzmann Numerical Wave Tank in Python"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 
 [project.optional-dependencies]
 dev = [
@@ -42,6 +43,10 @@ profile = "black"
 max-line-length = 88
 extend-ignore = ["E203"]
 
+[project.urls]
+Homepage = "https://github.com/oscarjtg/labnewt"
+Issues = "https://github.com/oscarjtg/labnewt/issues"
+
 [tool.pytest.ini_options]
-addopts = "-q --cov=lbnewtpy --cov-report=term-missing"
+addopts = "-q --cov=labnewt --cov-report=term-missing"
 testpaths = ["tests"]
