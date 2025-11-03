@@ -1,7 +1,6 @@
-import pytest
 import numpy as np
 
-from labnewt import Streamer, StencilD2Q9
+from labnewt import StencilD2Q9, Streamer
 
 
 def test_streamer_with_d2q9_stencil():
