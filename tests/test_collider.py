@@ -1,6 +1,6 @@
 import numpy as np
 
-from labnewt import StencilD2Q9, ColliderSRT
+from labnewt import ColliderSRT, StencilD2Q9
 
 
 def test_collider_srt_unit_omega():
