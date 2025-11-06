@@ -1,3 +1,6 @@
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 from .collider import ColliderSRT
@@ -64,3 +67,38 @@ class Model:
         set r to values evaluated by the function.
         """
         self._set(self.r, source, *args)
+
+    def plot_fields(self, path=None):
+        fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
+        X, Y = np.meshgrid(self.x, self.y)
+
+        p0 = ax[0].pcolormesh(X, Y, self.r)
+        p1 = ax[1].pcolormesh(X, Y, self.u)
+        p2 = ax[2].pcolormesh(X, Y, self.v)
+
+        cbar0 = plt.colorbar(p0, ax=ax[0])
+        cbar1 = plt.colorbar(p1, ax=ax[1])
+        cbar2 = plt.colorbar(p2, ax=ax[2])
+
+        cbar0.set_label(r"$\rho$", fontsize=14)
+        cbar1.set_label(r"$u$", fontsize=14)
+        cbar2.set_label(r"$v$", fontsize=14)
+
+        cbar0.ax.tick_params(labelsize=13)
+        cbar1.ax.tick_params(labelsize=13)
+        cbar2.ax.tick_params(labelsize=13)
+
+        ax[0].tick_params(labelsize=13)
+        ax[1].tick_params(labelsize=13)
+        ax[2].tick_params(labelsize=13)
+
+        ax[0].set_ylabel(r"$y$", fontsize=14)
+        ax[1].set_ylabel(r"$y$", fontsize=14)
+        ax[2].set_ylabel(r"$y$", fontsize=14)
+
+        ax[2].set_xlabel(r"$x$", fontsize=14)
+
+        plt.tight_layout()
+        if path is not None:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            plt.savefig(path)
