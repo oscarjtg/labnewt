@@ -34,7 +34,7 @@ def _velocity_x(f, s):
         Three-dimensional numpy array containing distribution function values.
 
     s : Stencil
-        Stencil instance, which contains attribute cx which is a one-dimensional numpy array.
+        Stencil instance containing attribute cx, a one-dimensional numpy array.
 
     Returns
     -------
@@ -42,3 +42,25 @@ def _velocity_x(f, s):
         Two-dimensional numpy array containins x-component of velocity values.
     """
     return np.sum(f * s.cx[:, None, None], axis=0)
+
+
+def _velocity_y(f, s):
+    """
+    Calculates the x-component of macroscopic velocity from distribution function `f`.
+
+        v[y, x] = sum_q f[q, y, x] * s.cy[q]
+
+    Parameters
+    ----------
+    f : np.ndarray
+        Three-dimensional numpy array containing distribution function values.
+
+    s : Stencil
+        Stencil instance containing attribute cy, a one-dimensional numpy array.
+
+    Returns
+    -------
+    v : np.ndarray
+        Two-dimensional numpy array containins y-component of velocity values.
+    """
+    return np.sum(f * s.cy[:, None, None], axis=0)
