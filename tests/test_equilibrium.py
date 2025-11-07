@@ -1,7 +1,7 @@
 import numpy as np
 
 from labnewt import StencilD2Q9
-from labnewt._equilibrium import feq2
+from labnewt._equilibrium import _feq2
 from labnewt._macroscopic import _density, _velocity_x, _velocity_y
 
 np.random.seed(42)
@@ -14,7 +14,7 @@ def test_feq2_array_zero_velocity():
     v = np.zeros(shape)
     s = StencilD2Q9()
 
-    feq_computed = feq2(r, u, v, s)
+    feq_computed = _feq2(r, u, v, s)
     feq_expected = s.w[:, None, None] * np.ones((s.nq, *shape))
 
     assert np.allclose(feq_computed, feq_expected)
@@ -27,7 +27,7 @@ def test_feq2_macroscopic_properties():
     v = np.random.normal(0.0, 0.2, shape)
     s = StencilD2Q9()
 
-    feq = feq2(r, u, v, s)
+    feq = _feq2(r, u, v, s)
     r1 = _density(feq)
     u1 = _velocity_x(feq, r1, s)
     v1 = _velocity_y(feq, r1, s)

@@ -1,4 +1,4 @@
-def feq2(r, u, v, s):
+def _feq2(r, u, v, s):
     """
     Compute the 2nd-order equilibrium distribution function.
 

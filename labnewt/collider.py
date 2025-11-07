@@ -1,4 +1,4 @@
-from ._equilibrium import feq2
+from ._equilibrium import _feq2
 
 
 class ColliderSRT:
@@ -26,4 +26,4 @@ class ColliderSRT:
             containing the particle distribution values
             after collision.
         """
-        return self.omega * feq2(r, u, v, s) + (1 - self.omega) * f
+        return self.omega * _feq2(r, u, v, s) + (1 - self.omega) * f

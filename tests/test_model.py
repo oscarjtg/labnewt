@@ -68,3 +68,31 @@ def test_model_plot_savefig(tmp_path):
         assert str(save_path) == called_path or called_path.endswith("demoplot.png")
 
     plt.close("all")
+
+
+def test_model_quiescent():
+    """Check that quiescent fluid remains quiescent after 100 timesteps."""
+    nx = 10
+    ny = 10
+    dx = 0.1
+    dt = 0.1
+    nu = 0.01
+    model = Model(nx, ny, dx, dt, nu)
+    shape = (nx, ny)
+    model.set_r(np.ones(shape))
+    model.set_u(np.zeros(shape))
+    model.set_v(np.zeros(shape))
+    model._initialise()
+
+    # Check after one timestep.
+    model._step()
+    assert np.allclose(model.r, np.ones(shape), atol=1.0e-12)
+    assert np.allclose(model.u, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(model.v, np.zeros(shape), atol=1.0e-12)
+
+    # Check again after 100 timesteps.
+    for _ in range(100):
+        model._step()
+    assert np.allclose(model.r, np.ones(shape), atol=1.0e-12)
+    assert np.allclose(model.u, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(model.v, np.zeros(shape), atol=1.0e-12)
