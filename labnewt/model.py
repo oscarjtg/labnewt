@@ -3,11 +3,11 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+from ._equilibrium import _feq2
+from ._macroscopic import _density, _velocity_x, _velocity_y
 from .collider import ColliderSRT
 from .stencil import StencilD2Q9
 from .streamer import Streamer
-from ._equilibrium import _feq2
-from ._macroscopic import _density, _velocity_x, _velocity_y
 
 
 class Model:
