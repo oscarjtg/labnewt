@@ -24,10 +24,11 @@ class Model:
 
         self.x = np.linspace(0.5 * dx, (nx - 0.5) * dx, nx)
         self.y = np.linspace(0.5 * dx, (ny - 0.5) * dx, ny)
-        self.u = np.zeros((nx, ny))
-        self.v = np.zeros((nx, ny))
-        self.r = np.ones((nx, ny))
-        self.f = np.zeros((self.stencil.nq, nx, ny))
+        self.shape = (ny, nx)
+        self.u = np.zeros(self.shape)
+        self.v = np.zeros(self.shape)
+        self.r = np.ones(self.shape)
+        self.f = np.zeros((self.stencil.nq, *self.shape))
 
     def _set(self, data, source, *args):
         """

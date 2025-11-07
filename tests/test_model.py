@@ -71,14 +71,17 @@ def test_model_plot_savefig(tmp_path):
 
 
 def test_model_quiescent():
-    """Check that quiescent fluid remains quiescent after 100 timesteps."""
-    nx = 10
-    ny = 10
+    """
+    Checks that quiescent fluid remains quiescent after 100 timesteps.
+    Also (implicitly) tests that arrays are created with the correct shape.
+    """
+    nx = 8
+    ny = 12
     dx = 0.1
     dt = 0.1
     nu = 0.01
     model = Model(nx, ny, dx, dt, nu)
-    shape = (nx, ny)
+    shape = (ny, nx)
     model.set_r(np.ones(shape))
     model.set_u(np.zeros(shape))
     model.set_v(np.zeros(shape))
