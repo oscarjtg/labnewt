@@ -1,9 +1,18 @@
 """Lattice Boltzmann numerical wave tank (CFD software)"""
 
+from .boundary import LeftWallNoSlip, RightWallNoSlip
 from .collider import ColliderSRT
 from .model import Model
 from .simulate import Simulation
 from .stencil import StencilD2Q9
 from .streamer import Streamer
 
-__all__ = ["StencilD2Q9", "Streamer", "ColliderSRT", "Model", "Simulation"]
+__all__ = [
+    "StencilD2Q9",
+    "Streamer",
+    "ColliderSRT",
+    "Model",
+    "Simulation",
+    "LeftWallNoSlip",
+    "RightWallNoSlip",
+]

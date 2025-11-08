@@ -30,6 +30,8 @@ class Model:
         self.r = np.ones(self.shape)
         self.f = np.zeros((self.stencil.nq, *self.shape))
 
+        self.boundary_conditions = []
+
     def _set(self, data, source, *args):
         """
         Sets data to values in source.
@@ -81,6 +83,8 @@ class Model:
         self.f = self.streamer.stream(self.f, self.stencil)
 
         # TODO: apply boundary conditions.
+        for bc in self.boundary_conditions:
+            bc.apply(self.f, self.stencil)
 
         # Compute new macroscopic variables
         self.r = _density(self.f)
@@ -94,6 +98,10 @@ class Model:
     def _initialise(self):
         """Initialise model."""
         self._initialise_feq2()
+
+    def add_boundary_condition(self, bc):
+        """Adds bc to self.boundary_conditions list."""
+        self.boundary_conditions.append(bc)
 
     def plot_fields(self, path=None):
         fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
