@@ -72,8 +72,8 @@ def test_constant_gravity_force_conserves_moments():
 
     force.apply_to_distribution(f, s)
     r_post = _density(f)
-    u_post = _velocity_x(f, r_post, s) - force.Fx * dt / r_post
-    v_post = _velocity_y(f, r_post, s) - force.Fy * dt / r_post
+    u_post = _velocity_x(f, r_post, s) - force.Fx / r_post
+    v_post = _velocity_y(f, r_post, s) - force.Fy / r_post
 
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)

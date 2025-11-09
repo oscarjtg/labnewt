@@ -1,6 +1,6 @@
 """Lattice Boltzmann numerical wave tank (CFD software)"""
 
-from .boundary import LeftWallNoSlip, RightWallNoSlip
+from .boundary import LeftRightWallsNoSlip, LeftWallNoSlip, RightWallNoSlip
 from .collider import ColliderSRT
 from .force import ConstantGravityForce
 from .model import Model
@@ -17,4 +17,5 @@ __all__ = [
     "Simulation",
     "LeftWallNoSlip",
     "RightWallNoSlip",
+    "LeftRightWallsNoSlip",
 ]

@@ -11,7 +11,9 @@ from .streamer import Streamer
 
 
 class Model:
-    def __init__(self, nx, ny, dx, dt, nu, stencil=None, streamer=None, collider=None):
+    def __init__(
+        self, nx, ny, dx, dt, nu, stencil=None, streamer=None, collider=None, quiet=True
+    ):
         self.stencil = StencilD2Q9() if stencil is None else stencil
         self.streamer = Streamer() if streamer is None else streamer
         self.collider = ColliderSRT(nu, dx, dt) if collider is None else collider
@@ -31,6 +33,16 @@ class Model:
         self.f = np.zeros((self.stencil.nq, *self.shape))
 
         self.boundary_conditions = []
+        self.forcings = []
+
+        if not quiet:
+            print("Model instance created with:")
+            print(f"nx       = {self.nx}")
+            print(f"ny       = {self.ny}")
+            print(f"dx       = {self.dx}")
+            print(f"dt       = {self.dt}")
+            print(f"nu       = {self.nu}")
+            print(f"tau_star = {1 / self.collider.omega:.3f}")
 
     def _set(self, data, source, *args):
         """
@@ -79,6 +91,10 @@ class Model:
         # Collision step
         self.f = self.collider.collide(self.f, self.r, self.u, self.v, self.stencil)
 
+        # Apply forcing terms
+        for force in self.forcings:
+            force.apply_to_distribution(self.f, self.stencil)
+
         # Stream step
         self.f = self.streamer.stream(self.f, self.stencil)
 
@@ -102,6 +118,10 @@ class Model:
     def add_boundary_condition(self, bc):
         """Adds bc to self.boundary_conditions list."""
         self.boundary_conditions.append(bc)
+
+    def add_forcing(self, force):
+        """Adds force to self.forcings list."""
+        self.forcings.append(force)
 
     def plot_fields(self, path=None):
         fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)

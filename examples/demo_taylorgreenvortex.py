@@ -1,3 +1,5 @@
+"""Taylor Green Vortex flow in two dimensions"""
+
 import numpy as np
 
 from labnewt import Model, Simulation

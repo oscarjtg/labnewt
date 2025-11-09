@@ -35,4 +35,4 @@ class ConstantGravityForce:
             3.0
             * s.w[:, None, None]
             * (s.cx[:, None, None] * self.Fx + s.cy[:, None, None] * self.Fy)
-        ) * self.dt
+        )
