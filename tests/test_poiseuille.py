@@ -2,7 +2,13 @@
 
 import numpy as np
 
-from labnewt import ConstantGravityForce, LeftRightWallsNoSlip, Model, Simulation
+from labnewt import (
+    BottomTopWallsNoSlip,
+    ConstantGravityForce,
+    LeftRightWallsNoSlip,
+    Model,
+    Simulation,
+)
 
 
 def velocity_profile(x, g, L, nu):
@@ -36,7 +42,7 @@ def relative_error(X_approx, X_exact):
     return np.linalg.norm(X_approx - X_exact) / np.linalg.norm(X_exact)
 
 
-def test_poiseuille_vertical():
+def test_poiseuille_vertical_down():
     gx = 0.0  # gravity x-component
     gy = -0.8  # gravity y-component
     nu = 0.1  # kinematic viscosity
@@ -54,10 +60,64 @@ def test_poiseuille_vertical():
     model.add_boundary_condition(LeftRightWallsNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
-    simulation.run(print_progress=False)
+    simulation.run()
 
     U_analytic = velocity_profile(model.x, gy, L, nu)
     U_numeric = model.v[0, :] * dx / dt
+
+    error = relative_error(U_numeric, U_analytic)
+    assert error * 100 < 0.05
+
+
+def test_poiseuille_vertical_up():
+    gx = 0.0  # gravity x-component
+    gy = 0.8  # gravity y-component
+    nu = 0.1  # kinematic viscosity
+    L = 1.0  # channel width
+    dx = 0.05  # grid spacing
+    dt = 0.005  # time step
+    tf = 10.0  # end time
+
+    nx = int(L / dx)
+    ny = 1
+
+    model = Model(nx, ny, dx, dt, nu, quiet=False)
+    gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
+    model.add_forcing(gravity)
+    model.add_boundary_condition(LeftRightWallsNoSlip())
+
+    simulation = Simulation(model, stop_time=tf)
+    simulation.run()
+
+    U_analytic = velocity_profile(model.x, gy, L, nu)
+    U_numeric = model.v[0, :] * dx / dt
+
+    error = relative_error(U_numeric, U_analytic)
+    assert error * 100 < 0.05
+
+
+def test_poiseuille_horizontal():
+    gx = 0.8  # gravity x-component
+    gy = 0.0  # gravity y-component
+    nu = 0.1  # kinematic viscosity
+    L = 1.0  # channel width
+    dx = 0.05  # grid spacing
+    dt = 0.005  # time step
+    tf = 10.0  # end time
+
+    nx = 1
+    ny = int(L / dx)
+
+    model = Model(nx, ny, dx, dt, nu, quiet=False)
+    gravity = ConstantGravityForce(dx, dt, abs(gx), gx, gy)
+    model.add_forcing(gravity)
+    model.add_boundary_condition(BottomTopWallsNoSlip())
+
+    simulation = Simulation(model, stop_time=tf)
+    simulation.run()
+
+    U_analytic = velocity_profile(model.y, gx, L, nu)
+    U_numeric = model.u[:, 0] * dx / dt
 
     error = relative_error(U_numeric, U_analytic)
     assert error * 100 < 0.05
