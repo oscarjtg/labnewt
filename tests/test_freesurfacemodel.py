@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import matplotlib.pyplot as plt
 import numpy as np
 
 from labnewt import FreeSurfaceModel
@@ -100,3 +103,17 @@ def test_free_surface_set_phi_with_eta_array():
     model.set_phi_from_eta(eta_array, a, b)
     assert np.allclose(model.phi[mask], 1.0, atol=0.5)
     assert np.allclose(model.phi[~mask], 0.0, atol=0.5)
+
+
+def test_free_surface_model_plot_savefig(tmp_path):
+    save_path = tmp_path / "plots" / "FreeSurfaceModel_demoplot.png"
+    model = FreeSurfaceModel(5, 5, 0.1, 0.1, 0.01)
+
+    with patch("matplotlib.pyplot.savefig") as mock_save:
+        model.plot_fields(path=str(save_path))
+        mock_save.assert_called_once()
+        called_path = mock_save.call_args[0][0]
+        assert str(save_path) == called_path or called_path.endswith(
+            "FreeSurfaceModel_demoplot.png"
+        )
+    plt.close("all")

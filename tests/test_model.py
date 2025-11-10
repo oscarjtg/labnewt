@@ -66,7 +66,6 @@ def test_model_plot_savefig(tmp_path):
         mock_save.assert_called_once()
         called_path = mock_save.call_args[0][0]
         assert str(save_path) == called_path or called_path.endswith("demoplot.png")
-
     plt.close("all")
 
 
