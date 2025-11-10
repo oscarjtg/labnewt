@@ -1,5 +1,3 @@
-import numpy as np
-
 from ._shift import periodic_shift
 
 
