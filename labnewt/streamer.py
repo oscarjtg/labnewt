@@ -1,9 +1,10 @@
 import numpy as np
 
+from ._shift import periodic_shift
+
 
 class Streamer:
     def stream(self, f, s):
         for q in range(s.nq):
-            f[q, :, :] = np.roll(f[q, :, :], s.ey[q], axis=0)
-            f[q, :, :] = np.roll(f[q, :, :], s.ex[q], axis=1)
+            f[q, :, :] = periodic_shift(f[q, :, :], s, q)
         return f
