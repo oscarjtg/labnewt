@@ -62,13 +62,13 @@ def test_delta_M_q_basic_with_density_gradient():
     mask_interface[1, :] = True
 
     # Top row
-    rho[0, :] += delta_rho
+    rho[2, :] -= delta_rho
     phi[2, :] = 0.0
     mask_gas[2, :] = True
 
     f = _feq2(rho, u, v, s)
 
-    for q in range(4):
+    for q in [0, 1, 2, 3, 5, 7]:
         deltaMq = _delta_M_q(q, f, s, phi, mask_gas, mask_fluid, mask_interface)
         assert np.allclose(deltaMq, np.zeros(shape), atol=1.0e-12)
 
@@ -77,3 +77,4 @@ def test_delta_M_q_basic_with_density_gradient():
                          [delta_rho/9, delta_rho/9, delta_rho/9],  # middle row
                          [0.0, 0.0, 0.0]]) # top row
     assert np.allclose(deltaMq, expected, atol=1.0e-12)
+

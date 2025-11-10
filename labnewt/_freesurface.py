@@ -47,16 +47,18 @@ def _delta_M_q(q, f, s, phi, mask_gas, mask_fluid, mask_interface):
     f_qbar_out = np.copy(f[s.q_rev[q], :, :])
     f_qbar_out_shifted = periodic_shift(f_qbar_out, s, s.q_rev[q])
 
-    mask = mask_interface * mask_fluid_shifted
-    print(mask)
-    delta_M_q[mask] += f_qbar_out_shifted[mask] - f_q_out[mask]
+    mask_if = mask_interface * mask_fluid_shifted
+    mask_ii = mask_interface * mask_interface_shifted
+    assert (mask_if * mask_ii == False).all
 
-    mask = mask_interface * mask_interface_shifted
-    print(mask)
+    # Interface <-> Fluid mass transfer.
+    delta_M_q[mask_if] += f_qbar_out_shifted[mask_if] - f_q_out[mask_if]
+
+    # Interface <-> Interface mass transfer.
     phi_shifted = periodic_shift(phi, s, s.q_rev[q])
-    delta_M_q[mask] += (
+    delta_M_q[mask_ii] += (
         0.5
-        * (phi[mask] + phi_shifted[mask])
-        * (f_qbar_out_shifted[mask] - f_q_out[mask])
+        * (phi[mask_ii] + phi_shifted[mask_ii])
+        * (f_qbar_out_shifted[mask_ii] - f_q_out[mask_ii])
     )
     return delta_M_q
