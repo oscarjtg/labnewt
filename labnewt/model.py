@@ -209,7 +209,9 @@ class FreeSurfaceModel(Model):
         mask_interface = ~mask_fluid * ~mask_air
         phi_array[mask_fluid] = 1.0
         phi_array[mask_air] = 0.0
-        phi_array[mask_interface] = (eta_array_2d[mask_interface] - Y[mask_interface] + delta) / (2 * delta)
+        phi_array[mask_interface] = (
+            eta_array_2d[mask_interface] - Y[mask_interface] + delta
+        ) / (2 * delta)
         return phi_array
 
     def set_phi_from_eta(self, eta_source, *args):
