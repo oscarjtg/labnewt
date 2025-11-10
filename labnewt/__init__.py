@@ -1,6 +1,7 @@
 """Lattice Boltzmann numerical wave tank (CFD software)"""
 
 from .boundary import (
+    AllWallsNoSlip,
     BottomTopWallsNoSlip,
     BottomWallNoSlip,
     LeftRightWallsNoSlip,
@@ -28,4 +29,5 @@ __all__ = [
     "BottomWallNoSlip",
     "TopWallNoSlip",
     "BottomTopWallsNoSlip",
+    "AllWallsNoSlip",
 ]
