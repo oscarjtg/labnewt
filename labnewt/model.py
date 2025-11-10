@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ._equilibrium import _feq2
+from ._freesurface import _delta_M_q
 from ._macroscopic import _density, _velocity_x, _velocity_y
 from .collider import ColliderSRT
 from .stencil import StencilD2Q9
@@ -176,6 +177,13 @@ class FreeSurfaceModel(Model):
             quiet=quiet,
         )
         self.phi = np.ones(self.shape)
+        self.mass = np.ones(self.shape)
+
+    def _mass_from_phi_r(self):
+        self.mass = self.phi * self.r
+
+    def _phi_from_mass_r(self):
+        self.phi = self.mass / self.r
 
     def set_phi(self, source, *args):
         """
@@ -185,6 +193,8 @@ class FreeSurfaceModel(Model):
         set phi to values evaluated by the function.
         """
         self._set(self.phi, source, *args)
+        self._mass_from_phi_r()
+        self._update_masks()
 
     def _phi_from_eta(self, eta_array, interface_width=1):
         """
@@ -236,6 +246,8 @@ class FreeSurfaceModel(Model):
             assert eta_source.shape == self.x.shape
             eta[:] = eta_source
         self.phi = self._phi_from_eta(eta)
+        self._mass_from_phi_r()
+        self._update_masks()
 
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
@@ -246,6 +258,10 @@ class FreeSurfaceModel(Model):
         for force in self.forcings:
             force.apply_to_distribution(self.f, self.stencil)
 
+        # Calculate mass exchange before streaming
+        self._update_dm()
+        self._update_mass()
+
         # Stream step
         self.f = self.streamer.stream(self.f, self.stencil)
 
@@ -253,18 +269,40 @@ class FreeSurfaceModel(Model):
         for bc in self.boundary_conditions:
             bc.apply(self.f, self.stencil)
 
-        # Update free surface
-        self._update_phi(self.phi, self.stencil)
+        # Apply free surface boundary condition
+        
 
         # Compute new macroscopic variables
         self.r = _density(self.f)
         self.u = _velocity_x(self.f, self.r, self.stencil)
         self.v = _velocity_y(self.f, self.r, self.stencil)
 
-    def _update_phi(self, phi, s):
-        mask_gas = phi <= 0.0
-        mask_fluid = phi > -1.0
-        mask_interface = ~mask_gas * ~mask_fluid
+        # Calculate new cell fill fractions
+        self._phi_from_mass_r()
+
+        # Calculate changed cell types
+
+    def _update_masks(self):
+        self.mask_gas = self.phi <= 0.0
+        self.mask_fluid = self.phi >= 1.0
+        self.mask_interface = ~self.mask_gas * ~self.mask_fluid
+
+    def _update_dm(self):
+        self._update_masks()
+        self.dm = np.zeros(self.shape)
+        for q in range(self.stencil.nq):
+            self.dm += _delta_M_q(
+                q,
+                self.f,
+                self.stencil,
+                self.phi,
+                self.mask_gas,
+                self.mask_fluid,
+                self.mask_interface,
+            )
+
+    def _update_mass(self):
+        self.mass += self.dm
 
     def plot_fields(self, path=None):
         fig, ax = plt.subplots(2, 2, figsize=(12, 10), sharex=True)

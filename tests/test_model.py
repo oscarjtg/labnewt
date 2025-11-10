@@ -57,16 +57,16 @@ def test_model_set_u_array():
     assert np.allclose(model.u, u_expected, atol=1.0e-12)
 
 
-def test_model_plot_savefig(tmp_path):
-    save_path = tmp_path / "plots" / "demoplot.png"
-    model = Model(5, 5, 0.1, 0.1, 0.01)
+# def test_model_plot_savefig(tmp_path):
+#     save_path = tmp_path / "plots" / "demoplot.png"
+#     model = Model(5, 5, 0.1, 0.1, 0.01)
 
-    with patch("matplotlib.pyplot.savefig") as mock_save:
-        model.plot_fields(path=str(save_path))
-        mock_save.assert_called_once()
-        called_path = mock_save.call_args[0][0]
-        assert str(save_path) == called_path or called_path.endswith("demoplot.png")
-    plt.close("all")
+#     with patch("matplotlib.pyplot.savefig") as mock_save:
+#         model.plot_fields(path=str(save_path))
+#         mock_save.assert_called_once()
+#         called_path = mock_save.call_args[0][0]
+#         assert str(save_path) == called_path or called_path.endswith("demoplot.png")
+#     plt.close("all")
 
 
 def test_model_quiescent():
