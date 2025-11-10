@@ -157,3 +157,79 @@ class Model:
         if path is not None:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             plt.savefig(path)
+
+
+class FreeSurfaceModel(Model):
+    def __init__(
+        self, nx, ny, dx, dt, nu, stencil=None, streamer=None, collider=None, quiet=True
+    ):
+        super().__init__(
+            nx,
+            ny,
+            dx,
+            dt,
+            nu,
+            stencil=stencil,
+            streamer=streamer,
+            collider=collider,
+            quiet=quiet,
+        )
+        self.phi = np.ones(self.shape)
+
+    def set_phi(self, source, *args):
+        """
+        Set fluid fraction values, phi.
+        If source is an array, set phi to array values.
+        If source is a function with signature (x, y, *args),
+        set phi to values evaluated by the function.
+        """
+        self._set(self.phi, source, *args)
+
+    def _phi_from_eta(self, eta_array, interface_width=1):
+        """
+        Parameters
+        ----------
+        eta_array : np.ndarray
+            One dimensional numpy array of floats containing eta[x].
+
+        interface_width : float
+            Interface half-width, in lattice units.
+
+        Returns
+        -------
+        phi_array : np.ndarray
+            Two dimensional numpy array of floats containing phi[y, x].
+        """
+        delta = interface_width * self.dx
+        X, Y = np.meshgrid(self.x, self.y)
+        eta_array_2d = eta_array[None, :] * np.ones(Y.shape)
+        phi_array = np.empty_like(X)
+        mask_fluid = Y <= eta_array[None, :] - delta
+        mask_air = Y >= eta_array[None, :] + delta
+        mask_interface = ~mask_fluid * ~mask_air
+        phi_array[mask_fluid] = 1.0
+        phi_array[mask_air] = 0.0
+        phi_array[mask_interface] = (eta_array_2d[mask_interface] - Y[mask_interface] + delta) / (2 * delta)
+        return phi_array
+
+    def set_phi_from_eta(self, eta_source, *args):
+        """
+        Set fluid fraction values, phi, from surface height, eta.
+
+        Parameters
+        ----------
+        eta_source : callable or array
+            Function with signature (x, *args) that generates surface elevations
+            at y = y(x) = eta(x, *args),
+            or an array with these values pre-computed.
+
+        *args : any
+            Optional arguments for eta if it is callable.
+        """
+        eta = np.empty_like(self.x)
+        if callable(eta_source):
+            eta[:] = eta_source(self.x, *args)
+        else:
+            assert eta_source.shape == self.x.shape
+            eta[:] = eta_source
+        self.phi = self._phi_from_eta(eta)
