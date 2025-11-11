@@ -30,7 +30,8 @@ class Model:
         self.u = np.zeros(self.shape)
         self.v = np.zeros(self.shape)
         self.r = np.ones(self.shape)
-        self.f = np.zeros((self.stencil.nq, *self.shape))
+        self.fi = np.zeros((self.stencil.nq, *self.shape))
+        self.fo = np.zeros_like(self.fi)
 
         self.boundary_conditions = []
         self.forcings = []
@@ -89,27 +90,27 @@ class Model:
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
-        self.f = self.collider.collide(self.f, self.r, self.u, self.v, self.stencil)
+        self.fo = self.collider.collide(self.fi, self.r, self.u, self.v, self.stencil)
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply_to_distribution(self.f, self.stencil)
+            force.apply_to_distribution(self.fo, self.stencil)
 
         # Stream step
-        self.f = self.streamer.stream(self.f, self.stencil)
+        self.fi = self.streamer.stream(self.fo, self.stencil)
 
         # TODO: apply boundary conditions.
         for bc in self.boundary_conditions:
-            bc.apply(self.f, self.stencil)
+            bc.apply(self.fi, self.stencil)
 
         # Compute new macroscopic variables
-        self.r = _density(self.f)
-        self.u = _velocity_x(self.f, self.r, self.stencil)
-        self.v = _velocity_y(self.f, self.r, self.stencil)
+        self.r = _density(self.fi)
+        self.u = _velocity_x(self.fi, self.r, self.stencil)
+        self.v = _velocity_y(self.fi, self.r, self.stencil)
 
     def _initialise_feq2(self):
         """Initialise self.f with 2nd order equilibrium distribution."""
-        self.f = _feq2(self.r, self.u, self.v, self.stencil)
+        self.fi = _feq2(self.r, self.u, self.v, self.stencil)
 
     def _initialise(self):
         """Initialise model."""
