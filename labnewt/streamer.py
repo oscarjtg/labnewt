@@ -9,7 +9,7 @@ class Streamer:
             fo[q, y, x] = fi[q, y - s.ey[q], x - s.ex[q]]
 
         Modifies fo in-place. Does not change fi.
-        
+
         Parameters
         ----------
         fi : np.ndarray

@@ -4,19 +4,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ._equilibrium import _feq2
-from ._macroscopic import _density, _velocity_x, _velocity_y
 from .collider import ColliderSRT
+from .macroscopic import Macroscopic
 from .stencil import StencilD2Q9
 from .streamer import Streamer
 
 
 class Model:
     def __init__(
-        self, nx, ny, dx, dt, nu, stencil=None, streamer=None, collider=None, quiet=True
+        self,
+        nx,
+        ny,
+        dx,
+        dt,
+        nu,
+        stencil=None,
+        streamer=None,
+        collider=None,
+        macros=None,
+        quiet=True,
     ):
         self.stencil = StencilD2Q9() if stencil is None else stencil
         self.streamer = Streamer() if streamer is None else streamer
         self.collider = ColliderSRT(nu, dx, dt) if collider is None else collider
+        self.macros = Macroscopic() if macros is None else macros
 
         self.nx = nx
         self.ny = ny
@@ -101,12 +112,12 @@ class Model:
 
         # TODO: apply boundary conditions.
         for bc in self.boundary_conditions:
-            bc.apply(self.fi, self.stencil)
+            bc.apply(self.fo, self.stencil)
 
         # Compute new macroscopic variables
-        self.r = _density(self.fi)
-        self.u = _velocity_x(self.fi, self.r, self.stencil)
-        self.v = _velocity_y(self.fi, self.r, self.stencil)
+        self.macros.density(self.f, self.fi)
+        self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
+        self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
 
     def _initialise_feq2(self):
         """Initialise self.f with 2nd order equilibrium distribution."""

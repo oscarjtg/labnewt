@@ -11,6 +11,7 @@ from .boundary import (
 )
 from .collider import ColliderSRT
 from .force import ConstantGravityForce
+from .macroscopic import Macroscopic
 from .model import FreeSurfaceModel, Model
 from .simulate import Simulation
 from .stencil import StencilD2Q9

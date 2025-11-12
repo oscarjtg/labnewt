@@ -1,7 +1,7 @@
 import numpy as np
 
 from labnewt import ConstantGravityForce, StencilD2Q9
-from labnewt._macroscopic import _density, _velocity_x, _velocity_y
+from labnewt._moments import _density, _velocity_x, _velocity_y
 
 
 def test_constant_gravity_force_default():

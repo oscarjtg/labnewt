@@ -2,7 +2,7 @@ import numpy as np
 
 from labnewt import StencilD2Q9
 from labnewt._equilibrium import _feq2
-from labnewt._macroscopic import _density, _velocity_x, _velocity_y
+from labnewt._moments import _density, _velocity_x, _velocity_y
 
 np.random.seed(42)
 
