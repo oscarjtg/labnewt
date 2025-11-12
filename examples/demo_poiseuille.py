@@ -1,9 +1,17 @@
 """Gravity-driven flow of a viscous fluid in a 2d rectangular channel"""
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 
-from labnewt import ConstantGravityForce, LeftRightWallsNoSlip, Model, Simulation
+from labnewt import (
+    ConstantGravityForce,
+    LeftWallNoSlip,
+    Model,
+    RightWallNoSlip,
+    Simulation,
+)
 
 
 def velocity_profile(x, g, L, nu):
@@ -52,7 +60,8 @@ if __name__ == "__main__":
     model = Model(nx, ny, dx, dt, nu, quiet=False)
     gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
     model.add_forcing(gravity)
-    model.add_boundary_condition(LeftRightWallsNoSlip())
+    model.add_boundary_condition(LeftWallNoSlip())
+    model.add_boundary_condition(RightWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
     simulation.run()
@@ -73,4 +82,8 @@ if __name__ == "__main__":
     plt.ylabel(r"$u_z$", fontsize=14)
     plt.tick_params(labelsize=13)
     plt.legend(fontsize=13)
+    path = "./examples/plots/poiseuille.png"
+    dir_ = os.path.dirname(path)
+    os.makedirs(dir_, exist_ok=True)
+    plt.savefig("./examples/plots/poiseuille.png", dpi=150)
     plt.show()
