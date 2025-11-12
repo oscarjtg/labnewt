@@ -20,20 +20,21 @@ def test_left_wall_no_slip():
     nx = 5
     ny = 5
     shape = (ny, nx)
-    f = np.random.rand(s.nq, *shape)
+    fi = np.random.rand(s.nq, *shape)
+    fo = np.empty_like(fi)
 
     q_idxs = s.q_left
     y_idxs = slice(None)
     x_idxs = 0
     f_out = {}
     for q in q_idxs:
-        f_out[q] = np.copy(f[q, y_idxs, x_idxs])
+        f_out[q] = np.copy(fi[q, y_idxs, x_idxs])
 
-    f = Streamer().stream(f, s)
-    LeftWallNoSlip().apply(f, s)
+    Streamer().stream(fi, fo, s)
+    LeftWallNoSlip().apply(fo, s)
 
     for q in q_idxs:
-        f_in = f[s.q_rev[q], y_idxs, x_idxs]
+        f_in = fo[s.q_rev[q], y_idxs, x_idxs]
         assert np.allclose(f_in, f_out[q], atol=1.0e-12)
 
 

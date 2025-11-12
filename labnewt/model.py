@@ -97,7 +97,7 @@ class Model:
             force.apply_to_distribution(self.fo, self.stencil)
 
         # Stream step
-        self.fi = self.streamer.stream(self.fo, self.stencil)
+        self.streamer.stream(self.fi, self.fo, self.stencil)
 
         # TODO: apply boundary conditions.
         for bc in self.boundary_conditions:
