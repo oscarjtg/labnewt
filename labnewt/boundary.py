@@ -3,289 +3,129 @@ Boundary condition classes.
 These are passed into Model through the add_boundary_condition() method.
 """
 
-import numpy as np
+
+class NoSlip:
+    def bounce_back(self, fi, fo, qi, qo, x, y):
+        """
+        Applies bounce back lattice Boltzmann boundary rule.
+
+        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+
+        Parameters
+        ----------
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Not modified.
+        qi : int
+            Lattice index of incoming particles.
+        qo : int
+            Lattice index of outgoing particles.
+        x : int
+            Spatial index of x-coordinate of grid cell.
+        y : int
+            Spatial index of y-coordinate of grid cell.
+        """
+        fi[qi, y, x] = fo[qo, y, x]
 
 
-class LeftWallNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
+class LeftWallNoSlip(NoSlip):
+    def apply(self, fi, fo, s):
         """
         Applies no slip BC to left wall, which is stationary.
 
+        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+
         Parameters
         ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Not modified.
         s : Stencil
-            instance of Stencil
+            Lattice stencil.
         """
-        f2_out = f[2, :, -1]
-
-        f6_out = np.empty_like(f2_out)
-        f6_out[0] = f[6, -1, -1]
-        f6_out[1:] = f[6, :-1, -1]
-
-        f7_out = np.empty_like(f2_out)
-        f7_out[:-1] = f[7, 1:, -1]
-        f7_out[-1] = f[7, 0, -1]
-
-        f[1, :, 0] = f2_out
-        f[5, :, 0] = f6_out
-        f[8, :, 0] = f7_out
+        qi = s.q_right
+        qo = s.q_rev[qi]
+        x = 0
+        y = slice(None)
+        self.bounce_back(fi, fo, qi, qo, x, y)
 
 
-class RightWallNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
+class RightWallNoSlip(NoSlip):
+    def apply(self, fi, fo, s):
         """
         Applies no slip BC to right wall, which is stationary.
 
-        Parameters
-        ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
-        s : Stencil
-            instance of Stencil
-        """
-        f1_out = f[1, :, 0]
-
-        f5_out = np.empty_like(f1_out)
-        f5_out[:-1] = f[5, 1:, 0]
-        f5_out[-1] = f[5, 0, 0]
-
-        f8_out = np.empty_like(f1_out)
-        f8_out[0] = f[8, -1, 0]
-        f8_out[1:] = f[8, :-1, 0]
-
-        f[2, :, -1] = f1_out
-        f[6, :, -1] = f5_out
-        f[7, :, -1] = f8_out
-
-
-class LeftRightWallsNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
-        """
-        Applies no slip BC to stationary left and right walls.
+        Modifies `fi` in place. `fo` is read-only and remains unchanged.
 
         Parameters
         ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Not modified.
         s : Stencil
-            instance of Stencil
+            Lattice stencil.
         """
-        f2_out = np.copy(f[2, :, -1])
-
-        f6_out = np.empty_like(f2_out)
-        f6_out[0] = f[6, -1, -1]
-        f6_out[1:] = f[6, :-1, -1]
-
-        f7_out = np.empty_like(f2_out)
-        f7_out[:-1] = f[7, 1:, -1]
-        f7_out[-1] = f[7, 0, -1]
-
-        f1_out = np.copy(f[1, :, 0])
-
-        f5_out = np.empty_like(f1_out)
-        f5_out[:-1] = f[5, 1:, 0]
-        f5_out[-1] = f[5, 0, 0]
-
-        f8_out = np.empty_like(f1_out)
-        f8_out[0] = f[8, -1, 0]
-        f8_out[1:] = f[8, :-1, 0]
-
-        f[1, :, 0] = f2_out
-        f[2, :, -1] = f1_out
-        f[5, :, 0] = f6_out
-        f[6, :, -1] = f5_out
-        f[7, :, -1] = f8_out
-        f[8, :, 0] = f7_out
+        qi = s.q_left
+        qo = s.q_rev[qi]
+        x = -1
+        y = slice(None)
+        self.bounce_back(fi, fo, qi, qo, x, y)
 
 
-class BottomWallNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
+class BottomWallNoSlip(NoSlip):
+    def apply(self, fi, fo, s):
         """
         Applies no slip BC to bottom wall, which is stationary.
 
+        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+
         Parameters
         ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Not modified.
         s : Stencil
-            instance of Stencil
+            Lattice stencil.
         """
-        f4_out = np.copy(f[4, -1, :])
-
-        f6_out = np.empty_like(f4_out)
-        f6_out[0] = f[6, -1, -1]
-        f6_out[1:] = f[6, -1, :-1]
-
-        f8_out = np.empty_like(f4_out)
-        f8_out[:-1] = f[8, -1, 1:]
-        f8_out[-1] = f[8, -1, 0]
-
-        f[3, 0, :] = f4_out
-        f[5, 0, :] = f6_out
-        f[7, 0, :] = f8_out
+        qi = s.q_up
+        qo = s.q_rev[qi]
+        x = slice(None)
+        y = 0
+        self.bounce_back(fi, fo, qi, qo, x, y)
 
 
-class TopWallNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
+class TopWallNoSlip(NoSlip):
+    def apply(self, fi, fo, s):
         """
         Applies no slip BC to top wall, which is stationary.
 
-        Parameters
-        ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
-        s : Stencil
-            instance of Stencil
-        """
-        f3_out = np.copy(f[3, 0, :])
-
-        f5_out = np.empty_like(f3_out)
-        f5_out[:-1] = f[5, 0, 1:]
-        f5_out[-1] = f[5, 0, 0]
-
-        f7_out = np.empty_like(f5_out)
-        f7_out[0] = f[7, 0, -1]
-        f7_out[1:] = f[7, 0, :-1]
-
-        f[4, -1, :] = f3_out
-        f[6, -1, :] = f5_out
-        f[8, -1, :] = f7_out
-
-
-class BottomTopWallsNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
-        """
-        Applies no slip BC to stationary bottom and top walls.
+        Modifies `fi` in place. `fo` is read-only and remains unchanged.
 
         Parameters
         ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Not modified.
         s : Stencil
-            instance of Stencil
+            Lattice stencil.
         """
-        f4_out = np.copy(f[4, -1, :])
-
-        f6_out = np.empty_like(f4_out)
-        f6_out[0] = f[6, -1, -1]
-        f6_out[1:] = f[6, -1, :-1]
-
-        f8_out = np.empty_like(f4_out)
-        f8_out[:-1] = f[8, -1, 1:]
-        f8_out[-1] = f[8, -1, 0]
-
-        f3_out = np.copy(f[3, 0, :])
-
-        f5_out = np.empty_like(f3_out)
-        f5_out[:-1] = f[5, 0, 1:]
-        f5_out[-1] = f[5, 0, 0]
-
-        f7_out = np.empty_like(f5_out)
-        f7_out[0] = f[7, 0, -1]
-        f7_out[1:] = f[7, 0, :-1]
-
-        f[3, 0, :] = f4_out
-        f[5, 0, :] = f6_out
-        f[7, 0, :] = f8_out
-        f[4, -1, :] = f3_out
-        f[6, -1, :] = f5_out
-        f[8, -1, :] = f7_out
-
-
-class AllWallsNoSlip:
-    def __init__(self):
-        pass
-
-    def apply(self, f, s):
-        """
-        Applies no slip BC to all walls, which are stationary.
-
-        Parameters
-        ----------
-        f : np.ndarray
-            three-dimensional numpy array containing particle distribution
-
-        s : Stencil
-            instance of Stencil
-        """
-        # Left-right walls.
-        f2_lr_out = np.copy(f[2, :, -1])
-
-        f6_lr_out = np.empty_like(f2_lr_out)
-        f6_lr_out[0] = f[6, -1, -1]
-        f6_lr_out[1:] = f[6, :-1, -1]
-
-        f7_lr_out = np.empty_like(f2_lr_out)
-        f7_lr_out[:-1] = f[7, 1:, -1]
-        f7_lr_out[-1] = f[7, 0, -1]
-
-        f1_lr_out = np.copy(f[1, :, 0])
-
-        f5_lr_out = np.empty_like(f1_lr_out)
-        f5_lr_out[:-1] = f[5, 1:, 0]
-        f5_lr_out[-1] = f[5, 0, 0]
-
-        f8_lr_out = np.empty_like(f1_lr_out)
-        f8_lr_out[0] = f[8, -1, 0]
-        f8_lr_out[1:] = f[8, :-1, 0]
-
-        # Bottom-top walls
-        f4_out = np.copy(f[4, -1, :])
-
-        f6_out = np.empty_like(f4_out)
-        f6_out[0] = f[6, -1, -1]
-        f6_out[1:] = f[6, -1, :-1]
-
-        f8_out = np.empty_like(f4_out)
-        f8_out[:-1] = f[8, -1, 1:]
-        f8_out[-1] = f[8, -1, 0]
-
-        f3_out = np.copy(f[3, 0, :])
-
-        f5_out = np.empty_like(f3_out)
-        f5_out[:-1] = f[5, 0, 1:]
-        f5_out[-1] = f[5, 0, 0]
-
-        f7_out = np.empty_like(f5_out)
-        f7_out[0] = f[7, 0, -1]
-        f7_out[1:] = f[7, 0, :-1]
-
-        # Write to f.
-        f[1, :, 0] = f2_lr_out
-        f[2, :, -1] = f1_lr_out
-        f[3, 0, :] = f4_out
-        f[4, -1, :] = f3_out
-        f[5, 0, :] = f6_out
-        f[5, :, 0] = f6_lr_out
-        f[6, :, -1] = f5_lr_out
-        f[6, -1, :] = f5_out
-        f[7, :, -1] = f8_lr_out
-        f[7, 0, :] = f8_out
-        f[8, :, 0] = f7_lr_out
-        f[8, -1, :] = f7_out
+        qi = s.q_down
+        qo = s.q_rev[qi]
+        x = slice(None)
+        y = -1
+        self.bounce_back(fi, fo, qi, qo, x, y)

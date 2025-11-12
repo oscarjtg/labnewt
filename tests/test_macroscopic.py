@@ -1,10 +1,11 @@
 import numpy as np
 
 from labnewt import StencilD2Q9
-from labnewt._macroscopic import _density, _velocity_x, _velocity_y
+from labnewt.macroscopic import Macroscopic
 
 
 def test_density_d2q9_against_known_values():
+    macros = Macroscopic()
     nq = 9
     shape = (2, 2)
     f = np.empty((nq, *shape))
@@ -20,12 +21,18 @@ def test_density_d2q9_against_known_values():
     r_exp[1, 0] = 0.1
     r_exp[1, 1] = 0.5
 
-    r_com = _density(f)
+    r_com = np.empty(shape)
+    f0 = np.copy(f)
+    macros.density(r_com, f)
 
+    # Check r_com was computed correctly.
     assert np.allclose(r_exp, r_com, atol=1.0e-12)
+    # Check that f was not changed.
+    assert np.allclose(f0, f, atol=1.0e-12)
 
 
 def test_velocity_x_d2q9_against_known_values():
+    macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
     f = np.empty((s.nq, *shape))
@@ -41,13 +48,19 @@ def test_velocity_x_d2q9_against_known_values():
     u_exp[1, 0] = 0.3  # only three vectors in positive x direction
     u_exp[1, 1] = 0.6  # three +ve vals in +ve x, three -ve vals in -ve x
 
+    u_com = np.empty(shape)
     r = np.ones(shape)
-    u_com = _velocity_x(f, r, s)
+    f0 = np.copy(f)
+    macros.velocity_x(u_com, r, f, s)
 
+    # Check u_com was computed currectly.
     assert np.allclose(u_exp, u_com, atol=1.0e-12)
+    # Check that f was not changed.
+    assert np.allclose(f, f0, atol=1.0e-12)
 
 
 def test_velocity_y_d2q9_against_known_values():
+    macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
     f = np.empty((s.nq, *shape))
@@ -63,7 +76,44 @@ def test_velocity_y_d2q9_against_known_values():
     v_exp[1, 0] = 0.3  # only three vectors in positive x direction
     v_exp[1, 1] = 0.6  # three +ve vals in +ve x, three -ve vals in -ve x
 
+    v_com = np.empty(shape)
     r = np.ones(shape)
-    v_com = _velocity_y(f, r, s)
+    f0 = np.copy(f)
+    macros.velocity_y(v_com, r, f, s)
 
+    # Check that v_com was computed correctly.
     assert np.allclose(v_exp, v_com, atol=1.0e-12)
+    # Check that f was not changed.
+    assert np.allclose(f, f0, atol=1.0e-12)
+
+
+def test_force_distribution_array_with_zeros():
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    shape = (5, 5)
+    f = np.random.rand(s.nq, *shape)
+    f0 = np.copy(f)
+    Fx = np.zeros(shape)
+    Fy = np.zeros(shape)
+    macros.force_distribution_array(f, Fx, Fy, s)
+
+    # With zero force, expect no change to f
+    assert np.allclose(f, f0, atol=1.0e-12)
+
+    # Check for unintended side effects
+    assert np.allclose(Fx, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(Fy, np.zeros(shape), atol=1.0e-12)
+
+
+def test_force_distribution_constant_with_zeros():
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    shape = (5, 5)
+    f = np.random.rand(s.nq, *shape)
+    f0 = np.copy(f)
+    Fx = 0.0
+    Fy = 0.0
+    macros.force_distribution_constant(f, Fx, Fy, s)
+
+    # With zero force, expect no change to f
+    assert np.allclose(f, f0, atol=1.0e-12)

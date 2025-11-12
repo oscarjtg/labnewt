@@ -1,7 +1,6 @@
 import numpy as np
 
-from labnewt import ColliderSRT, StencilD2Q9
-from labnewt._macroscopic import _density, _velocity_x, _velocity_y
+from labnewt import ColliderSRT, Macroscopic, StencilD2Q9
 
 
 def test_collider_srt_unit_omega():
@@ -27,32 +26,61 @@ def test_collider_srt_unit_omega_stationary_fluid():
     ny = 10
     shape = (nx, ny)
 
-    f = np.random.rand(s.nq, *shape)
+    fi = np.random.rand(s.nq, *shape)
+    fo = np.empty_like(fi)
     r = np.ones(shape)
     u = np.zeros(shape)
     v = np.zeros(shape)
-    f_coll = collider.collide(f, r, u, v, s)
-    assert np.allclose(f_coll, s.w[:, None, None], atol=1.0e-12)
+
+    fi0 = np.copy(fi)
+    r0 = np.copy(r)
+    u0 = np.copy(u)
+    v0 = np.copy(v)
+
+    collider.collide(fo, fi, r, u, v, s)
+
+    # Check no unintended side effects.
+    assert np.allclose(fi, fi0, atol=1.0e-12)
+    assert np.allclose(r, r0, atol=1.0e-12)
+    assert np.allclose(u, u0, atol=1.0e-12)
+    assert np.allclose(v, v0, atol=1.0e-12)
+
+    # Check physics.
+    assert np.allclose(fo, s.w[:, None, None], atol=1.0e-12)
 
 
 def test_collider_srt_conserves_moments():
     collider = ColliderSRT(0.01, 0.1, 0.1)
     s = StencilD2Q9()
+    macros = Macroscopic()
 
     nx = 10
     ny = 10
     shape = (nx, ny)
 
-    f = np.random.rand(s.nq, *shape)
-    r_pre = _density(f)
-    u_pre = _velocity_x(f, r_pre, s)
-    v_pre = _velocity_y(f, r_pre, s)
+    fi = np.random.rand(s.nq, *shape)
+    fi0 = np.copy(fi)
+    fo = np.empty_like(fi)
+    r_pre, u_pre, v_pre = np.empty(shape), np.empty(shape), np.empty(shape)
+    macros.density(r_pre, fi)
+    macros.velocity_x(u_pre, r_pre, fi, s)
+    macros.velocity_y(v_pre, r_pre, fi, s)
 
-    f_coll = collider.collide(f, r_pre, u_pre, v_pre, s)
-    r_post = _density(f_coll)
-    u_post = _velocity_x(f_coll, r_post, s)
-    v_post = _velocity_y(f_coll, r_post, s)
+    r0, u0, v0 = np.copy(r_pre), np.copy(u_pre), np.copy(v_pre)
 
+    collider.collide(fo, fi, r0, u0, v0, s)
+    r_post, u_post, v_post = np.empty(shape), np.empty(shape), np.empty(shape)
+    macros.density(r_post, fo)
+    macros.velocity_x(u_post, r_post, fo, s)
+    macros.velocity_y(v_post, r_post, fo, s)
+
+    # Check no unintended side effects.
+    assert np.allclose(fi, fi0, atol=1.0e-12)
+    assert np.allclose(r_pre, r0, atol=1.0 - 12)
+    assert np.allclose(u_pre, u0, atol=1.0 - 12)
+    assert np.allclose(v_pre, v0, atol=1.0 - 12)
+
+    # Check correct physics.
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)
     assert np.allclose(v_pre, v_post, atol=1.0e-12)
