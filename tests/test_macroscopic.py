@@ -85,3 +85,35 @@ def test_velocity_y_d2q9_against_known_values():
     assert np.allclose(v_exp, v_com, atol=1.0e-12)
     # Check that f was not changed.
     assert np.allclose(f, f0, atol=1.0e-12)
+
+
+def test_force_distribution_array_with_zeros():
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    shape = (5, 5)
+    f = np.random.rand(s.nq, *shape)
+    f0 = np.copy(f)
+    Fx = np.zeros(shape)
+    Fy = np.zeros(shape)
+    macros.force_distribution_array(f, Fx, Fy, s)
+
+    # With zero force, expect no change to f
+    assert np.allclose(f, f0, atol=1.0e-12)
+
+    # Check for unintended side effects
+    assert np.allclose(Fx, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(Fy, np.zeros(shape), atol=1.0e-12)
+
+
+def test_force_distribution_constant_with_zeros():
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    shape = (5, 5)
+    f = np.random.rand(s.nq, *shape)
+    f0 = np.copy(f)
+    Fx = 0.0
+    Fy = 0.0
+    macros.force_distribution_constant(f, Fx, Fy, s)
+
+    # With zero force, expect no change to f
+    assert np.allclose(f, f0, atol=1.0e-12)

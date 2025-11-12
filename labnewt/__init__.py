@@ -1,10 +1,7 @@
 """Lattice Boltzmann numerical wave tank (CFD software)"""
 
 from .boundary import (
-    AllWallsNoSlip,
-    BottomTopWallsNoSlip,
     BottomWallNoSlip,
-    LeftRightWallsNoSlip,
     LeftWallNoSlip,
     RightWallNoSlip,
     TopWallNoSlip,
@@ -25,11 +22,9 @@ __all__ = [
     "Model",
     "FreeSurfaceModel",
     "Simulation",
+    "Macroscopic",
     "LeftWallNoSlip",
     "RightWallNoSlip",
-    "LeftRightWallsNoSlip",
     "BottomWallNoSlip",
     "TopWallNoSlip",
-    "BottomTopWallsNoSlip",
-    "AllWallsNoSlip",
 ]

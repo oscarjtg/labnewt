@@ -30,9 +30,5 @@ class ConstantGravityForce:
         self._set_ex_ey(ex, ey)
         self._set_Fx_Fy()
 
-    def apply_to_distribution(self, f, s):
-        f[:] += (
-            3.0
-            * s.w[:, None, None]
-            * (s.cx[:, None, None] * self.Fx + s.cy[:, None, None] * self.Fy)
-        )
+    def apply(self, f, s, macros):
+        macros.force_distribution_constant(f, self.Fx, self.Fy, s)

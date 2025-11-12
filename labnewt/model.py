@@ -101,21 +101,21 @@ class Model:
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
-        self.fo = self.collider.collide(self.fi, self.r, self.u, self.v, self.stencil)
+        self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply_to_distribution(self.fo, self.stencil)
+            force.apply(self.fo, self.stencil, self.macros)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
 
-        # TODO: apply boundary conditions.
+        # Apply boundary conditions.
         for bc in self.boundary_conditions:
-            bc.apply(self.fo, self.stencil)
+            bc.apply(self.fi, self.fo, self.stencil)
 
         # Compute new macroscopic variables
-        self.macros.density(self.f, self.fi)
+        self.macros.density(self.r, self.fi)
         self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
         self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
 

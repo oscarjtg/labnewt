@@ -3,11 +3,13 @@
 import numpy as np
 
 from labnewt import (
-    BottomTopWallsNoSlip,
+    BottomWallNoSlip,
     ConstantGravityForce,
-    LeftRightWallsNoSlip,
+    LeftWallNoSlip,
     Model,
+    RightWallNoSlip,
     Simulation,
+    TopWallNoSlip,
 )
 
 
@@ -57,7 +59,8 @@ def test_poiseuille_vertical_down():
     model = Model(nx, ny, dx, dt, nu, quiet=False)
     gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
     model.add_forcing(gravity)
-    model.add_boundary_condition(LeftRightWallsNoSlip())
+    model.add_boundary_condition(LeftWallNoSlip())
+    model.add_boundary_condition(RightWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
     simulation.run()
@@ -84,7 +87,8 @@ def test_poiseuille_vertical_up():
     model = Model(nx, ny, dx, dt, nu, quiet=False)
     gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
     model.add_forcing(gravity)
-    model.add_boundary_condition(LeftRightWallsNoSlip())
+    model.add_boundary_condition(LeftWallNoSlip())
+    model.add_boundary_condition(RightWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
     simulation.run()
@@ -111,7 +115,8 @@ def test_poiseuille_horizontal():
     model = Model(nx, ny, dx, dt, nu, quiet=False)
     gravity = ConstantGravityForce(dx, dt, abs(gx), gx, gy)
     model.add_forcing(gravity)
-    model.add_boundary_condition(BottomTopWallsNoSlip())
+    model.add_boundary_condition(BottomWallNoSlip())
+    model.add_boundary_condition(TopWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
     simulation.run()

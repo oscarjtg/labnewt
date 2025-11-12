@@ -1,7 +1,7 @@
 import numpy as np
 
-from labnewt import ConstantGravityForce, StencilD2Q9
-from labnewt._moments import _density, _velocity_x, _velocity_y
+from labnewt import ConstantGravityForce, Macroscopic, StencilD2Q9
+from labnewt._moments import _m0, _mx, _my
 
 
 def test_constant_gravity_force_default():
@@ -59,6 +59,7 @@ def test_constant_gravity_force_conserves_moments():
     dx = 0.1
     dt = 0.1
     force = ConstantGravityForce(dx, dt)
+    macros = Macroscopic()
     s = StencilD2Q9()
 
     nx = 10
@@ -66,14 +67,14 @@ def test_constant_gravity_force_conserves_moments():
     shape = (nx, ny)
 
     f = np.random.rand(s.nq, *shape)
-    r_pre = _density(f)
-    u_pre = _velocity_x(f, r_pre, s)
-    v_pre = _velocity_y(f, r_pre, s)
+    r_pre = _m0(f)
+    u_pre = _mx(f, s) / r_pre
+    v_pre = _my(f, s) / r_pre
 
-    force.apply_to_distribution(f, s)
-    r_post = _density(f)
-    u_post = _velocity_x(f, r_post, s) - force.Fx / r_post
-    v_post = _velocity_y(f, r_post, s) - force.Fy / r_post
+    force.apply(f, s, macros)
+    r_post = _m0(f)
+    u_post = (_mx(f, s) - force.Fx) / r_post
+    v_post = (_my(f, s) - force.Fy) / r_post
 
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)
