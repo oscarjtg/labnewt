@@ -1,7 +1,5 @@
 """Gravity-driven flow of a viscous fluid in a 2d rectangular channel"""
 
-import numpy as np
-
 from labnewt import (
     BottomWallNoSlip,
     ConstantGravityForce,
@@ -11,24 +9,23 @@ from labnewt import (
     Simulation,
     TopWallNoSlip,
 )
+from labnewt.diagnostics import relative_error
 
 
 def velocity_profile(x, g, L, nu):
     """
-    Calculates the Poiseuille velocity at position x
-    along a channel of width L.
+    Calculates the fluid velocity in a two-dimensional channel.
+
+    Assumes laminar (Poiseuille) flow.
 
     Parameters
     ---------
     x : float
-        Position along channel, in m.
-
+        Position across channel, in m.
     g : float
         Gravity, in m/s^2.
-
     L : float
         Channel width, in m.
-
     nu : float
         Kinematic viscosity, in m^2/s.
 
@@ -38,10 +35,6 @@ def velocity_profile(x, g, L, nu):
         Flow velocity.
     """
     return g / (2.0 * nu) * (L - x) * x
-
-
-def relative_error(X_approx, X_exact):
-    return np.linalg.norm(X_approx - X_exact) / np.linalg.norm(X_exact)
 
 
 def test_poiseuille_vertical_down():

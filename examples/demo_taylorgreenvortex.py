@@ -3,6 +3,7 @@
 import numpy as np
 
 from labnewt import Model, Simulation
+from labnewt.diagnostics import relative_error
 
 
 def tgv_ux(x, y, t, kx, ky, td, u0):
@@ -15,26 +16,21 @@ def tgv_ux(x, y, t, kx, ky, td, u0):
     ----------
     x : float
         x-coordinate
-
     y : float
         y-coordinate
-
     t : float
-        time
-
+        Time
     kx : float
         x-component of wave vector
-
     ky : float
         y-component of wave vector
-
     td : float
-        decay timescale
-
+        Decay timescale
     u0 : float
-        initial amplitude of u
+        Initial amplitude of u
 
     Returns
+    -------
     ux : float
         x-component of velocity of Taylor Green Vortex at position (x, y) at time t.
     """
@@ -51,28 +47,23 @@ def tgv_uy(x, y, t, kx, ky, td, u0):
     ----------
     x : float
         x-coordinate
-
     y : float
         y-coordinate
-
     t : float
-        time
-
+        Time
     kx : float
         x-component of wave vector
-
     ky : float
         y-component of wave vector
-
     td : float
-        decay timescale
-
+        Decay timescale
     u0 : float
         initial amplitude of u
 
     Returns
+    -------
     uy : float
-        y-component of velocity of Taylor Green Vortex at position (x, y) at time t.
+        y-component of velocity of Taylor Green Vortex at position (x, y) at time t
     """
     return u0 * np.sqrt(kx / ky) * np.sin(kx * x) * np.cos(ky * y) * np.exp(-t / td)
 
@@ -89,34 +80,27 @@ def tgv_p(x, y, t, kx, ky, td, u0, p0, rho0):
     ----------
     x : float
         x-coordinate
-
     y : float
         y-coordinate
-
     t : float
-        time
-
+        Time
     kx : float
         x-component of wave vector
-
     ky : float
         y-component of wave vector
-
     td : float
-        decay timescale
-
+        Decay timescale
     u0 : float
-        initial amplitude of u
-
+        Initial amplitude of u
     p0 : float
-        reference pressure
-
+        Reference pressure
     rho0 : float
-        reference density
+        Reference density
 
     Returns
+    -------
     p : float
-        pressure of Taylor Green Vortex at position (x, y) at time t.
+        Pressure of Taylor Green Vortex at position (x, y) at time t.
     """
     return p0 - 0.25 * rho0 * u0 * u0 * (
         (ky / kx) * np.cos(2 * kx * x) + (kx / ky) * np.cos(2 * ky * y)
@@ -130,21 +114,18 @@ def convert_pressure_to_density(p, p0, rho0, cs=1.0 / np.sqrt(3)):
     Parameters
     ----------
     p : float
-        pressure
-
+        Pressure
     p0 : float
-        reference pressure
-
+        Reference pressure
     rho0 : float
-        reference density (usually unity in lattice Boltzmann model)
-
+        Reference density (usually unity in lattice Boltzmann model)
     cs : float
-        lattice speed of sound in a lattice Boltzmann model
+        Lattice speed of sound in a lattice Boltzmann model
 
     Returns
     -------
     rho : float
-        density used in a weakly compressible lattice Boltzmann model
+        Density used in a weakly compressible lattice Boltzmann model
     """
     return rho0 + (p - p0) / cs**2
 
@@ -156,16 +137,13 @@ def convert_density_to_pressure(rho, rho0, p0, cs=1.0 / np.sqrt(3)):
     Parameters
     ----------
     rho : float
-        density from a weakly compressible lattice Boltzmann model
-
+        Density from a weakly compressible lattice Boltzmann model
     rho0 : float
-        reference density (usually unity)
-
+        Reference density (usually unity)
     p0 : float
-        reference pressure
-
+        Reference pressure
     cs : float
-        lattice speed of sound in a lattice Boltzmann model
+        Lattice speed of sound in a lattice Boltzmann model
 
     Returns
     -------
@@ -183,41 +161,30 @@ def tgv_r(x, y, t, kx, ky, td, u0, p0, rho0):
     ----------
     x : float
         x-coordinate
-
     y : float
         y-coordinate
-
     t : float
-        time
-
+        Time
     kx : float
         x-component of wave vector
-
     ky : float
         y-component of wave vector
-
     td : float
-        decay timescale
-
+        Decay timescale
     u0 : float
-        initial amplitude of u
-
+        Initial amplitude of u
     p0 : float
-        reference pressure
-
+        Reference pressure
     rho0 : float
-        reference density
+        Reference density
 
     Returns
+    -------
     p : float
-        pressure of Taylor Green Vortex at position (x, y) at time t.
+        Pressure of Taylor Green Vortex at position (x, y) at time t
     """
     p = tgv_p(x, y, t, kx, ky, td, u0, p0, rho0)
     return convert_pressure_to_density(p, p0, rho0)
-
-
-def relative_error(X_approx, X_true):
-    return np.linalg.norm(X_approx - X_true) / np.linalg.norm(X_true)
 
 
 if __name__ == "__main__":

@@ -136,6 +136,21 @@ class Model:
         self.forcings.append(force)
 
     def plot_fields(self, path=None):
+        """
+        Plots heatmaps of `self.r`, `self.u`, and `self.v` arrays.
+        Saves plot if a `path` is given.
+        The plot can be displayed by calling `plt.show()`.
+
+        Parameters
+        ----------
+        path : str or Path-like, optional
+            File path to save the plot. If None (default), the plot is
+            not saved.
+
+        Returns
+        -------
+        None
+        """
         fig, ax = plt.subplots(3, 1, figsize=(12, 6), sharex=True)
         X, Y = np.meshgrid(self.x, self.y)
 
@@ -191,6 +206,7 @@ class FreeSurfaceModel(Model):
     def set_phi(self, source, *args):
         """
         Set fluid fraction values, phi.
+
         If source is an array, set phi to array values.
         If source is a function with signature (x, y, *args),
         set phi to values evaluated by the function.
@@ -199,11 +215,12 @@ class FreeSurfaceModel(Model):
 
     def _phi_from_eta(self, eta_array, interface_width=1):
         """
+        Set fill fraction `self.phi` from elevation values in `eta_array`.
+
         Parameters
         ----------
         eta_array : np.ndarray
-            One dimensional numpy array of floats containing eta[x].
-
+            One-dimensional numpy array of floats containing eta[x].
         interface_width : float
             Interface half-width, in lattice units.
 
@@ -228,7 +245,9 @@ class FreeSurfaceModel(Model):
 
     def set_phi_from_eta(self, eta_source, *args):
         """
-        Set fluid fraction values, phi, from surface height, eta.
+        Set fill fraction `self.phi` from surface elevation `eta_source`.
+
+        Modifies `self.phi`.
 
         Parameters
         ----------
@@ -238,7 +257,11 @@ class FreeSurfaceModel(Model):
             or an array with these values pre-computed.
 
         *args : any
-            Optional arguments for eta if it is callable.
+            Optional arguments for `eta_source` if it is callable.
+
+        Returns
+        -------
+        None
         """
         eta = np.empty_like(self.x)
         if callable(eta_source):
