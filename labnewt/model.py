@@ -202,6 +202,11 @@ class FreeSurfaceModel(Model):
             quiet=quiet,
         )
         self.phi = np.ones(self.shape)
+        self.G = np.zeros(self.shape, dtype=np.bool)
+        self.F = np.zeros(self.shape, dtype=np.bool)
+        self.I = np.zeros(self.shape, dtype=np.bool)
+        self.nx = np.zeros(self.shape)
+        self.ny = np.zeros(self.shape)
 
     def set_phi(self, source, *args):
         """
@@ -270,3 +275,75 @@ class FreeSurfaceModel(Model):
             assert eta_source.shape == self.x.shape
             eta[:] = eta_source
         self.phi = self._phi_from_eta(eta)
+
+    def _set_masks(self):
+        np.less_equal(self.phi, 0.0, out=self.G)
+        np.greater_equal(self.phi, 1.0, out=self.F)
+        np.logical_not(np.logical_or(self.G, self.F), out=self.I)
+
+    def _surface_normal(self):
+        self.ny, self.nx = -np.gradient(self.phi)
+        magnitude = np.linalg.norm(self.nx, self.ny)
+        self.nx[self.I] = self.nx[self.I] / magnitude[self.I]
+        self.ny[self.I] = self.ny[self.I] / magnitude[self.I]
+
+    def plot_fields(self, path=None):
+        """
+        Plots heatmaps of `self.r`, `self.u`, `self.v`, and `self.phi` arrays.
+        Saves plot if a `path` is given.
+        The plot can be displayed by calling `plt.show()`.
+
+        Parameters
+        ----------
+        path : str or Path-like, optional
+            File path to save the plot. If None (default), the plot is
+            not saved.
+
+        Returns
+        -------
+        None
+        """
+        fig, ax = plt.subplots(2, 2, figsize=(12, 10), sharex=True)
+        X, Y = np.meshgrid(self.x, self.y)
+
+        ax0 = ax[0][0]
+        ax1 = ax[1][0]
+        ax2 = ax[1][1]
+        ax3 = ax[0][1]
+
+        p0 = ax0.pcolormesh(X, Y, self.r)
+        p1 = ax1.pcolormesh(X, Y, self.u)
+        p2 = ax2.pcolormesh(X, Y, self.v)
+        p3 = ax3.pcolormesh(X, Y, self.phi)
+
+        cbar0 = plt.colorbar(p0, ax=ax0)
+        cbar1 = plt.colorbar(p1, ax=ax1)
+        cbar2 = plt.colorbar(p2, ax=ax2)
+        cbar3 = plt.colorbar(p3, ax=ax3)
+
+        cbar0.set_label(r"$\rho$", fontsize=14)
+        cbar1.set_label(r"$u$", fontsize=14)
+        cbar2.set_label(r"$v$", fontsize=14)
+        cbar3.set_label(r"$\phi$", fontsize=14)
+
+        cbar0.ax.tick_params(labelsize=13)
+        cbar1.ax.tick_params(labelsize=13)
+        cbar2.ax.tick_params(labelsize=13)
+        cbar3.ax.tick_params(labelsize=13)
+
+        ax0.tick_params(labelsize=13)
+        ax1.tick_params(labelsize=13)
+        ax2.tick_params(labelsize=13)
+        ax3.tick_params(labelsize=13)
+
+        ax[0][0].set_ylabel(r"$y$", fontsize=14)
+        ax[1][0].set_ylabel(r"$y$", fontsize=14)
+
+        ax[1][0].set_xlabel(r"$x$", fontsize=14)
+        ax[1][1].set_xlabel(r"$x$", fontsize=14)
+
+        plt.tight_layout()
+        if path is not None:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            plt.savefig(path)
+            plt.close()

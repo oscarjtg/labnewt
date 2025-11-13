@@ -100,3 +100,41 @@ def test_free_surface_set_phi_with_eta_array():
     model.set_phi_from_eta(eta_array, a, b)
     assert np.allclose(model.phi[mask], 1.0, atol=0.5)
     assert np.allclose(model.phi[~mask], 0.0, atol=0.5)
+
+
+# def test_free_surface_model_set_masks():
+#     nx = 10
+#     ny = 10
+#     dx = 0.1
+#     dt = 0.1
+#     nu = 0.01
+#     model = FreeSurfaceModel(nx, ny, dx, dt, nu)
+
+#     def eta_func(x, a, b):
+#         return np.where(x < a, b, 0)
+
+#     a = 0.55
+#     b = 0.55
+
+#     model.set_phi_from_eta(eta_func, a, b)
+
+#     model._set_masks()
+#     model.plot_fields()
+#     import matplotlib.pyplot as plt
+
+#     plt.show()
+
+#     x = model.x
+#     y = model.y
+#     eps = 1.0e-03
+
+#     FX = x < a - eps
+#     FY = y < b - eps
+#     FLUID = FY[:, np.newaxis] * FX
+
+#     GX = x < a + eps
+#     GY = y < b + eps
+#     GAS = ~(GY[:, np.newaxis] * GX)
+
+#     # assert np.allclose(model.F, FLUID)
+#     # assert np.allclose(model.G, GAS)
