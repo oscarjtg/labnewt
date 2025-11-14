@@ -202,9 +202,9 @@ class FreeSurfaceModel(Model):
             quiet=quiet,
         )
         self.phi = np.ones(self.shape)
-        self.G = np.zeros(self.shape, dtype=np.bool)
-        self.F = np.zeros(self.shape, dtype=np.bool)
-        self.I = np.zeros(self.shape, dtype=np.bool)
+        self.GAS = np.zeros(self.shape, dtype=np.bool)
+        self.FLUID = np.zeros(self.shape, dtype=np.bool)
+        self.INTERFACE = np.zeros(self.shape, dtype=np.bool)
         self.nx = np.zeros(self.shape)
         self.ny = np.zeros(self.shape)
 
@@ -277,15 +277,15 @@ class FreeSurfaceModel(Model):
         self.phi = self._phi_from_eta(eta)
 
     def _set_masks(self):
-        np.less_equal(self.phi, 0.0, out=self.G)
-        np.greater_equal(self.phi, 1.0, out=self.F)
-        np.logical_not(np.logical_or(self.G, self.F), out=self.I)
+        np.less_equal(self.phi, 0.0, out=self.GAS)
+        np.greater_equal(self.phi, 1.0, out=self.FLUID)
+        np.logical_not(np.logical_or(self.GAS, self.FLUID), out=self.INTERFACE)
 
     def _surface_normal(self):
         self.ny, self.nx = -np.gradient(self.phi)
         magnitude = np.linalg.norm(self.nx, self.ny)
-        self.nx[self.I] = self.nx[self.I] / magnitude[self.I]
-        self.ny[self.I] = self.ny[self.I] / magnitude[self.I]
+        self.nx[self.INTERFACE] = self.nx[self.INTERFACE] / magnitude[self.INTERFACE]
+        self.ny[self.INTERFACE] = self.ny[self.INTERFACE] / magnitude[self.INTERFACE]
 
     def plot_fields(self, path=None):
         """

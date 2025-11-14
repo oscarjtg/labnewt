@@ -1,6 +1,6 @@
 import numpy as np
 
-from labnewt._vof import _dMq_
+from labnewt._vof import _dMq, _dMq_
 
 
 class Stencil:
@@ -50,32 +50,32 @@ def make_masks(ny, nx, pattern="stripes"):
     - 'stripes' alternates along y
     - 'checker' makes a checkerboard of the three masks
     """
-    G = np.zeros((ny, nx), dtype=bool)
-    I = np.zeros((ny, nx), dtype=bool)
-    F = np.zeros((ny, nx), dtype=bool)
+    G_mask = np.zeros((ny, nx), dtype=bool)
+    I_mask = np.zeros((ny, nx), dtype=bool)
+    F_mask = np.zeros((ny, nx), dtype=bool)
 
     if pattern == "stripes":
         for y in range(ny):
             if y % 3 == 0:
-                G[y, :] = True
+                G_mask[y, :] = True
             elif y % 3 == 1:
-                I[y, :] = True
+                I_mask[y, :] = True
             else:
-                F[y, :] = True
+                F_mask[y, :] = True
     elif pattern == "checker":
         for y in range(ny):
             for x in range(nx):
                 idx = (y + 2 * x) % 3
                 if idx == 0:
-                    G[y, x] = True
+                    G_mask[y, x] = True
                 elif idx == 1:
-                    I[y, x] = True
+                    I_mask[y, x] = True
                 else:
-                    F[y, x] = True
+                    F_mask[y, x] = True
     else:
         raise ValueError("unknown pattern")
 
-    return F, I, G
+    return F_mask, I_mask, G_mask
 
 
 def test_dMq_basic_values():
@@ -102,9 +102,6 @@ def test_dMq_basic_values():
     # masks (mutually exclusive)
     F_mask, I_mask, G_mask = make_masks(ny, nx, pattern="stripes")
 
-    # preallocate dMq with non-zero sentinel values to ensure it's overwritten
-    dMq = np.full((nq, ny, nx), fill_value=-999.0, dtype=float)
-
     # Keep copies of all read-only arrays for later mutation checks
     fo_copy = fo.copy()
     phi_copy = phi.copy()
@@ -113,7 +110,7 @@ def test_dMq_basic_values():
     G_copy = G_mask.copy()
 
     # Run function
-    _dMq_(dMq, fo, phi, F_mask, I_mask, G_mask, s)
+    dMq = _dMq(fo, phi, F_mask, I_mask, G_mask, s)
 
     # compute expected via reference loop
     expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
@@ -131,7 +128,7 @@ def test_dMq_basic_values():
 
 def test_only_dMq_modified_and_shape_preserved():
     """
-    Ensure only dMq is modified.
+    Ensure only dMq is modified by _dMq_.
 
     Other arrays keep their original identity and content.
     """
@@ -208,8 +205,6 @@ def test_dMq_against_loop_randomized():
     # create masks ensuring exclusivity; use stripes to be deterministic
     F_mask, I_mask, G_mask = make_masks(ny, nx, pattern="stripes")
 
-    dMq = np.full((nq, ny, nx), np.nan, dtype=float)
-
     # copy read-only arrays
     fo_copy = fo.copy()
     phi_copy = phi.copy()
@@ -218,7 +213,7 @@ def test_dMq_against_loop_randomized():
     G_copy = G_mask.copy()
 
     # run function
-    _dMq_(dMq, fo, phi, F_mask, I_mask, G_mask, s)
+    dMq = _dMq(fo, phi, F_mask, I_mask, G_mask, s)
 
     # compute expected
     expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)

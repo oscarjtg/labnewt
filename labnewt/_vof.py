@@ -1,9 +1,20 @@
 """Volume of fluid (free surface) helper functions."""
 
 import numpy as np
+from numpy.typing import NDArray
+
+from .stencil import Stencil
 
 
-def _dMq_(dMq, fo, phi, F_mask, I_mask, G_mask, s):
+def _dMq_(
+    dMq: NDArray[np.float64],
+    fo: NDArray[np.float64],
+    phi: NDArray[np.float64],
+    F_mask: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    G_mask: NDArray[np.bool_],
+    s: Stencil,
+) -> None:
     """
     Computes mass exchange in each lattice direction (q) at each cell (y, x).
 
@@ -75,3 +86,48 @@ def _dMq_(dMq, fo, phi, F_mask, I_mask, G_mask, s):
     )
 
     np.multiply(A, (f_nq - f_here), out=dMq)
+
+
+def _dMq(
+    fo: NDArray[np.float64],
+    phi: NDArray[np.float64],
+    F_mask: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    G_mask: NDArray[np.bool_],
+    s: Stencil,
+) -> NDArray[np.float64]:
+    """
+    Computes mass exchange in each lattice direction (q) at each cell (y, x).
+
+    `fo`, `phi`, `F_mask`, `I_mask`, `G_mask`, and `s` are read-only
+    and are not changed.
+
+    Parameters
+    ----------
+    fo : np.ndarray
+        Three-dimensional numpy array of floats of shape (nq, ny, nx).
+        Contains outgoing distribution functions.
+    phi : np.ndarray
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell fill fractions.
+    F_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks FLUID cells.
+    I_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks INTERFACE cells.
+    G_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks GAS cells.
+    s : Stencil
+        Lattice stencil object.
+
+    Returns
+    -------
+    dMq : np.ndarray
+        Three-dimensional numpy array of floats of shape (nq, ny, nx).
+        Contains mass exchanged in each lattice direction.
+    """
+    dMq = np.empty_like(fo)
+    _dMq_(dMq, fo, phi, F_mask, I_mask, G_mask, s)
+    return dMq
