@@ -69,17 +69,17 @@ def _dMq_(
     phi_here = phi[np.newaxis, ...]
 
     G_mask = ~np.logical_or(F_mask, I_mask)
-    F_here = F_mask[np.newaxis, ...]
+
     I_here = I_mask[np.newaxis, ...]
     G_here = G_mask[np.newaxis, ...]
-    F_nq = F_mask[y_nq, x_nq]
+
     I_nq = I_mask[y_nq, x_nq]
     G_nq = G_mask[y_nq, x_nq]
 
     A = np.where(
         G_here,
         0.0,
-        np.where(G_nq, 0.0, np.where(I_here & I_nq, 0.5*(phi_here + phi_nq), 1.0))
+        np.where(G_nq, 0.0, np.where(I_here & I_nq, 0.5 * (phi_here + phi_nq), 1.0)),
     )
 
     np.multiply(A, (f_nq - f_here), out=dMq)

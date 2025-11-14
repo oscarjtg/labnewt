@@ -76,7 +76,6 @@ def make_masks(ny, nx, pattern="stripes"):
 def test_dMq_all_fluid():
     """Deterministic test on all fluid domain."""
     s = StencilD2Q9()
-    nq = s.nq
     ny = 5
     nx = 6
 
@@ -98,44 +97,13 @@ def test_dMq_all_fluid():
 
     # Value correctness
     npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 
-
-def test_dMq_all_fluid():
-    """Deterministic test on all fluid domain."""
-    s = StencilD2Q9()
-    nq = s.nq
-    ny = 5
-    nx = 6
-
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
-    fo = _feq2(r, u, v, s)
-
-    phi = np.ones_like(r)
-    F_mask = np.ones_like(r, dtype=np.bool_)
-    I_mask = np.zeros_like(r, dtype=np.bool_)
-    G_mask = np.zeros_like(r, dtype=np.bool_)
-
-    # Run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
-
-    # compute expected via reference loop
-    expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
-
-    # Value correctness
-    npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
-    # Mass conservation
     assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 
 
 def test_dMq_fluid_interface_gas():
     """Deterministic test on all fluid domain."""
     s = StencilD2Q9()
-    nq = s.nq
     ny = 5
     nx = 6
 
@@ -161,7 +129,7 @@ def test_dMq_fluid_interface_gas():
 
     # Value correctness
     npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
+
     # Mass conservation
     assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 

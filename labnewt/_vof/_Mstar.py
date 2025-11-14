@@ -4,13 +4,10 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def _Mstar_inplace(
-    M : NDArray[np.float64],
-    dMq : NDArray[np.float64]
-) -> None:
+def _Mstar_inplace(M: NDArray[np.float64], dMq: NDArray[np.float64]) -> None:
     """
     Computes mass after mass exchange but before cell conversion.
-    
+
     M^star = M + sum_q dM_q
 
     Writes M^star directly into array `M`.

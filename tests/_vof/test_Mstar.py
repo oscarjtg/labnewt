@@ -3,7 +3,6 @@ import numpy.testing as npt
 
 from labnewt._vof import _Mstar_inplace
 
-
 np.random.seed(42)
 
 
@@ -88,7 +87,7 @@ def test_Mstar_inplace_compare_implementations():
     dMq = np.random.rand(nq, ny, nx)
 
     M0 = np.copy(M)
-    
+
     expected = compute_Mstar_explicit_loop(M0, dMq)
 
     _Mstar_inplace(M, dMq)
