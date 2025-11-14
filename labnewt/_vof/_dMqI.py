@@ -1,4 +1,4 @@
-"""Mass exchange functions, acting at FLUID and INTERFACE cells."""
+"""Mass exchange functions, acting only at INTERFACE cells."""
 
 import numpy as np
 from numpy.typing import NDArray
@@ -6,20 +6,21 @@ from numpy.typing import NDArray
 from ..stencil import Stencil
 
 
-def _dMq_(
+def _dMqI_(
     dMq: NDArray[np.float64],
     fo: NDArray[np.float64],
     phi: NDArray[np.float64],
     F_mask: NDArray[np.bool_],
     I_mask: NDArray[np.bool_],
+    G_mask: NDArray[np.bool_],
     s: Stencil,
 ) -> None:
     """
-    Computes mass exchange in each lattice direction (q) at each cell.
+    Computes mass exchange in each lattice direction (q) at each INTERFACE cell.
 
     Modifies `dMq` in place.
 
-    `fo`, `phi`, `F_mask`, `I_mask`, and `s` are read-only
+    `fo`, `phi`, `F_mask`, `I_mask`, `G_mask`, and `s` are read-only
     and are not changed.
 
     Parameters
@@ -39,6 +40,9 @@ def _dMq_(
     I_mask : np.ndarray
         Two-dimensional numpy array of bools of shape (ny, nx).
         Marks INTERFACE cells.
+    G_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks GAS cells.
     s : Stencil
         Lattice stencil object.
 
@@ -51,7 +55,10 @@ def _dMq_(
     assert phi.shape == (ny, nx)
     assert F_mask.shape == (ny, nx)
     assert I_mask.shape == (ny, nx)
+    assert G_mask.shape == (ny, nx)
+    assert not np.any(F_mask & G_mask)
     assert not np.any(F_mask & I_mask)
+    assert not np.any(I_mask & G_mask)
 
     y = np.arange(ny)
     x = np.arange(nx)
@@ -68,34 +75,31 @@ def _dMq_(
     phi_nq = phi[y_nq, x_nq]
     phi_here = phi[np.newaxis, ...]
 
-    G_mask = ~np.logical_or(F_mask, I_mask)
-    F_here = F_mask[np.newaxis, ...]
     I_here = I_mask[np.newaxis, ...]
-    G_here = G_mask[np.newaxis, ...]
-    F_nq = F_mask[y_nq, x_nq]
     I_nq = I_mask[y_nq, x_nq]
     G_nq = G_mask[y_nq, x_nq]
 
     A = np.where(
-        G_here,
+        ~I_here,
         0.0,
-        np.where(G_nq, 0.0, np.where(I_here & I_nq, 0.5*(phi_here + phi_nq), 1.0))
+        np.where(G_nq, 0.0, np.where(I_nq, 0.5 * (phi_here + phi_nq), 1.0)),
     )
 
     np.multiply(A, (f_nq - f_here), out=dMq)
 
 
-def _dMq(
+def _dMqI(
     fo: NDArray[np.float64],
     phi: NDArray[np.float64],
     F_mask: NDArray[np.bool_],
     I_mask: NDArray[np.bool_],
+    G_mask: NDArray[np.bool_],
     s: Stencil,
 ) -> NDArray[np.float64]:
     """
-    Computes mass exchange in each lattice direction (q) at each cell.
+    Computes mass exchange in each lattice direction (q) at each INTERFACE cell.
 
-    `fo`, `phi`, `F_mask`, `I_mask`, and `s` are read-only
+    `fo`, `phi`, `F_mask`, `I_mask`, `G_mask`, and `s` are read-only
     and are not changed.
 
     Parameters
@@ -112,6 +116,9 @@ def _dMq(
     I_mask : np.ndarray
         Two-dimensional numpy array of bools of shape (ny, nx).
         Marks INTERFACE cells.
+    G_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks GAS cells.
     s : Stencil
         Lattice stencil object.
 
@@ -122,5 +129,5 @@ def _dMq(
         Contains mass exchanged in each lattice direction.
     """
     dMq = np.empty_like(fo)
-    _dMq_(dMq, fo, phi, F_mask, I_mask, s)
+    _dMqI_(dMq, fo, phi, F_mask, I_mask, G_mask, s)
     return dMq

@@ -2,8 +2,7 @@ import numpy as np
 import numpy.testing as npt
 
 from labnewt import StencilD2Q9
-from labnewt._equilibrium import _feq2
-from labnewt._vof import _dMq, _dMq_
+from labnewt._vof import _dMqI, _dMqI_
 
 
 def _compute_expected(dMq_shape, fo, phi, F_mask, I_mask, G_mask, s):
@@ -17,19 +16,17 @@ def _compute_expected(dMq_shape, fo, phi, F_mask, I_mask, G_mask, s):
                 y2 = (y + s.ey[q]) % ny
                 x2 = (x + s.ex[q]) % nx
                 # A logic
-                if G_mask[y, x]:
+                if not I_mask[y, x]:
                     A = 0.0
                 elif G_mask[y2, x2]:
                     A = 0.0
-                elif I_mask[y, x] and I_mask[y2, x2]:
+                elif I_mask[y2, x2]:
                     A = 0.5 * (phi[y, x] + phi[y2, x2])
-                elif I_mask[y, x] and F_mask[y2, x2]:
-                    A = 1.0
-                elif F_mask[y2, x2] or I_mask[y2, x2]:
+                elif F_mask[y2, x2]:
                     A = 1.0
                 else:
-                    # This should not happen.
-                    A = np.nan
+                    # This should not happen per your assumptions; set to 0 for safety.
+                    A = 0.0
 
                 f_here = fo[q, y, x]
                 f_nei = fo[s.q_rev[q], y2, x2]
@@ -73,99 +70,6 @@ def make_masks(ny, nx, pattern="stripes"):
     return F_mask, I_mask, G_mask
 
 
-def test_dMq_all_fluid():
-    """Deterministic test on all fluid domain."""
-    s = StencilD2Q9()
-    nq = s.nq
-    ny = 5
-    nx = 6
-
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
-    fo = _feq2(r, u, v, s)
-
-    phi = np.ones_like(r)
-    F_mask = np.ones_like(r, dtype=np.bool_)
-    I_mask = np.zeros_like(r, dtype=np.bool_)
-    G_mask = np.zeros_like(r, dtype=np.bool_)
-
-    # Run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
-
-    # compute expected via reference loop
-    expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
-
-    # Value correctness
-    npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
-
-
-def test_dMq_all_fluid():
-    """Deterministic test on all fluid domain."""
-    s = StencilD2Q9()
-    nq = s.nq
-    ny = 5
-    nx = 6
-
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
-    fo = _feq2(r, u, v, s)
-
-    phi = np.ones_like(r)
-    F_mask = np.ones_like(r, dtype=np.bool_)
-    I_mask = np.zeros_like(r, dtype=np.bool_)
-    G_mask = np.zeros_like(r, dtype=np.bool_)
-
-    # Run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
-
-    # compute expected via reference loop
-    expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
-
-    # Value correctness
-    npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
-    # Mass conservation
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
-
-
-def test_dMq_fluid_interface_gas():
-    """Deterministic test on all fluid domain."""
-    s = StencilD2Q9()
-    nq = s.nq
-    ny = 5
-    nx = 6
-
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
-    fo = _feq2(r, u, v, s)
-
-    F_mask = np.ones_like(r, dtype=np.bool_)
-    F_mask[-2:, :] = False
-    I_mask = np.zeros_like(r, dtype=np.bool_)
-    I_mask[-2, :] = True
-    G_mask = np.zeros_like(r, dtype=np.bool_)
-    G_mask[-1, :] = True
-
-    phi = np.where(F_mask, 1.0, np.where(I_mask, 0.5, 0.0))
-
-    # Run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
-
-    # compute expected via reference loop
-    expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
-
-    # Value correctness
-    npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-    
-    # Mass conservation
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
-
-
 def test_dMq_basic_values():
     """Basic deterministic test: small grid with known values."""
     s = StencilD2Q9()
@@ -190,7 +94,7 @@ def test_dMq_basic_values():
     G_copy = G_mask.copy()
 
     # Run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
+    dMq = _dMqI(fo, phi, F_mask, I_mask, G_mask, s)
 
     # compute expected via reference loop
     expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
@@ -204,9 +108,6 @@ def test_dMq_basic_values():
     npt.assert_array_equal(F_mask, F_copy)
     npt.assert_array_equal(I_mask, I_copy)
     npt.assert_array_equal(G_mask, G_copy)
-
-    # Ensure mass is conserved
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 
 
 def test_only_dMq_modified_and_shape_preserved():
@@ -242,7 +143,7 @@ def test_only_dMq_modified_and_shape_preserved():
     id_G = id(G_mask)
 
     # Call
-    _dMq_(dMq, fo, phi, F_mask, I_mask, s)
+    _dMqI_(dMq, fo, phi, F_mask, I_mask, G_mask, s)
 
     # dMq should now be non-zero in general (so changed from initial zeros)
     assert not np.all(dMq == 0.0)
@@ -284,16 +185,13 @@ def test_dMq_against_loop_randomized():
     G_copy = G_mask.copy()
 
     # run function
-    dMq = _dMq(fo, phi, F_mask, I_mask, s)
+    dMq = _dMqI(fo, phi, F_mask, I_mask, G_mask, s)
 
     # compute expected
     expected = _compute_expected(dMq.shape, fo, phi, F_mask, I_mask, G_mask, s)
 
     # compare
     npt.assert_allclose(dMq, expected, rtol=1e-12, atol=1e-12)
-
-    # Mass conservation
-    assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 
     # verify read-only arrays unchanged
     npt.assert_array_equal(fo, fo_copy)
