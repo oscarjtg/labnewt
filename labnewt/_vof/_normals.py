@@ -49,8 +49,11 @@ def _normals_(
     grad_y, grad_x = np.gradient(phi, dy, dx)
 
     # Compute magnitude of gradient.
-    mag = np.empty_like(phi)
-    np.hypot(grad_x, grad_y, out=mag)
+    mag = np.hypot(grad_x, grad_y)
+
+    # Small regularisation to make mag always non-zero
+    eps = 1.0e-12
+    mag += eps
 
     norm_x.fill(np.nan)
     norm_y.fill(np.nan)

@@ -22,9 +22,9 @@ class VolumeOfFluid:
         self.x = np.arange(shape[1])
         self.y = np.arange(shape[0])
 
-    def _set_masks(self):
-        np.less_equal(self.phi, 0.0, out=self.G_mask)
-        np.greater_equal(self.phi, 1.0, out=self.F_mask)
+    def _set_masks(self, eps=1.0e-05):
+        np.less_equal(self.phi, eps, out=self.G_mask)
+        np.greater_equal(self.phi, 1.0 - eps, out=self.F_mask)
         np.logical_not(np.logical_or(self.G_mask, self.F_mask), out=self.I_mask)
 
     def initialise(self, rho):
@@ -49,9 +49,20 @@ class VolumeOfFluid:
         _Mstar_inplace(self.M, self.dMq)
 
         # Identify INTERFACE cells with excess mass and transfer to neighbours.
-        self.M = _distribute_Mex(
-            self.M, rho, self.norm_x, self.norm_y, self.I_mask, stencil
-        )
+        def within_bounds(phi, eps=1.0e-05):
+            return np.all((-eps <= phi) & (phi <= 1.0 + eps))
+
+        counter = 0
+        while not within_bounds(self.M / rho):
+            self.M = _distribute_Mex(
+                self.M, rho, self.norm_x, self.norm_y, self.I_mask, stencil
+            )
+            counter += 1
+            if counter > 5:
+                # print("Warning: _distribute_Mex iterations did not converge.")
+                # print(f"M_min = {self.M.min()}")
+                # print(f"M_max = {self.M.max()}")
+                break
 
         # Update phi, masks, and normals.
         self.update_state(rho)

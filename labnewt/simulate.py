@@ -1,5 +1,6 @@
 """Class that manages simulation."""
 
+import os
 import time
 
 
@@ -8,11 +9,16 @@ class Simulation:
         self.model = model
         self.stop_time = stop_time
         self.clock = 0.0
+        self.timestep = 0
 
-    def run(self, print_progress=True):
+    def run(self, print_progress=True, save_frames=False):
+        if save_frames:
+            os.makedirs("./frames", exist_ok=True)
         # Initialise model, and time it.
         start0 = time.perf_counter()
         self.model._initialise()
+        if save_frames:
+            self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
         end0 = time.perf_counter()
         if print_progress:
             print(f"Model initialisation complete in {end0 - start0:.6f} seconds")
@@ -21,6 +27,9 @@ class Simulation:
         start1 = time.perf_counter()
         self.model._step()
         self.clock += self.model.dt
+        self.timestep += 1
+        if save_frames:
+            self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
         end1 = time.perf_counter()
         time_taken = end1 - start1
         if print_progress:
@@ -33,7 +42,6 @@ class Simulation:
 
         n_timesteps = int(self.stop_time / self.model.dt)
         n_timesteps_10percent = int(n_timesteps / 10)
-        timestep = 0
 
         # Run model to completion.
         start2 = time.perf_counter()
@@ -41,10 +49,12 @@ class Simulation:
         while self.clock < self.stop_time:
             self.model._step()
             self.clock += self.model.dt
-            timestep += 1
+            self.timestep += 1
+            if save_frames and self.timestep % 10 == 0:
+                self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
             if not print_progress:
                 continue
-            if timestep % n_timesteps_10percent == 0:
+            if self.timestep % n_timesteps_10percent == 0:
                 end = time.perf_counter()
                 percent_complete = self.clock / self.stop_time * 100
                 string1 = f"Model completion: {percent_complete:.1f}%."

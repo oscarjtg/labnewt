@@ -36,6 +36,7 @@ class Model:
         self.dx = dx
         self.dt = dt
         self.nu = nu
+        self.clock = 0.0
 
         self.x = np.linspace(0.5 * dx, (nx - 0.5) * dx, nx)
         self.y = np.linspace(0.5 * dx, (ny - 0.5) * dx, ny)
@@ -121,6 +122,9 @@ class Model:
         self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
         self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
 
+        # Update time
+        self.clock += self.dt
+
     def _initialise_feq2(self):
         """Initialise self.f with 2nd order equilibrium distribution."""
         self.fi = _feq2(self.r, self.u, self.v, self.stencil)
@@ -128,6 +132,7 @@ class Model:
     def _initialise(self):
         """Initialise model."""
         self._initialise_feq2()
+        self.clock = 0.0
 
     def add_boundary_condition(self, bc):
         """Adds bc to self.boundary_conditions list."""
@@ -182,6 +187,8 @@ class Model:
 
         ax[2].set_xlabel(r"$x$", fontsize=14)
 
+        plt.suptitle(f"time = {self.clock:.3f} s")
+
         plt.tight_layout()
         if path is not None:
             os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -226,7 +233,7 @@ class FreeSurfaceModel(Model):
         """
         self._set(self.vof.phi, source, *args)
 
-    def _phi_from_eta(self, eta_array, interface_width=1):
+    def _phi_from_eta(self, eta_array, interface_width=0.9):
         """
         Set fill fraction `self.phi` from elevation values in `eta_array`.
 
@@ -294,10 +301,64 @@ class FreeSurfaceModel(Model):
         print(f"# of INTERFACE cells       = {np.sum(self.vof.I_mask)}")
         print(f"# of GAS cells             = {np.sum(self.vof.G_mask)}")
 
+    def print_means(self):
+        print(f"mean density[y, x]    = {np.mean(self.r):.3f}")
+        print(f"mean velocity_X[y, x] = {np.mean(self.u):.3f}")
+        print(f"mean velocity_Y[y, x] = {np.mean(self.v):.3f}")
+        print(f"mean phi[y, x]        = {np.mean(self.vof.phi):.3f}")
+        print(f"mean M[y, x]          = {np.mean(self.vof.M):.3f}")
+        print(f"% FLUID cells         = {np.mean(self.vof.F_mask)*100:.2f}")
+        print(f"% of INTERFACE cells  = {np.mean(self.vof.I_mask)*100:.2f}")
+        print(f"% of GAS cells        = {np.mean(self.vof.G_mask)*100:.2f}")
+
     def _initialise(self):
         """Initialise model."""
         self._initialise_feq2()
         self.vof.initialise(self.r)
+
+        # Mei's method: timestep but without evolving velocity
+        # until fi stabilises.
+
+        fi_old = np.empty_like(self.fi)
+        number_of_iterations = 0
+
+        while not np.allclose(self.fi, fi_old, atol=1.0e-12):
+            number_of_iterations += 1
+            fi_old[:] = self.fi
+
+            # Collision step
+            self.collider.collide(
+                self.fo, self.fi, self.r, self.u, self.v, self.stencil
+            )
+
+            # Apply forcing terms
+            for force in self.forcings:
+                force.apply(self.fo, self.stencil, self.macros)
+
+            # Stream step
+            self.streamer.stream(self.fi, self.fo, self.stencil)
+
+            # Apply boundary conditions.
+            self.fsbc.apply(
+                self.fi,
+                self.fo,
+                self.stencil,
+                self.u,
+                self.v,
+                self.vof.I_mask,
+                self.vof.G_mask,
+            )
+            for bc in self.boundary_conditions:
+                bc.apply(self.fi, self.fo, self.stencil)
+
+            # Compute new density, but not velocity.
+            self.macros.density(self.r, self.fi)
+
+            # Do not update free surface!
+            self.vof.M = self.vof.phi * self.r
+
+        print(f"Initialisation complete after {number_of_iterations} iterations.")
+        self.clock = 0.0
 
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
@@ -332,6 +393,9 @@ class FreeSurfaceModel(Model):
         # Update free surface
         self.vof.step(self.fo, self.r, self.stencil)
 
+        # Update time
+        self.clock += self.dt
+
     def plot_fields(self, path=None):
         """
         Plots heatmaps of `self.r`, `self.u`, `self.v`, and `self.phi` arrays.
@@ -348,44 +412,81 @@ class FreeSurfaceModel(Model):
         -------
         None
         """
-        fig, ax = plt.subplots(2, 2, figsize=(12, 10), sharex=True)
+        fig, ax = plt.subplots(2, 4, figsize=(16, 8), sharex=True)
         X, Y = np.meshgrid(self.x, self.y)
 
         ax0 = ax[0][0]
         ax1 = ax[1][0]
         ax2 = ax[1][1]
         ax3 = ax[0][1]
+        ax4 = ax[0][2]
+        ax5 = ax[1][2]
+        ax6 = ax[0][3]
+        ax7 = ax[1][3]
 
         p0 = ax0.pcolormesh(X, Y, self.r)
         p1 = ax1.pcolormesh(X, Y, self.u)
         p2 = ax2.pcolormesh(X, Y, self.v)
-        p3 = ax3.pcolormesh(X, Y, self.vof.phi)
+        p3 = ax3.pcolormesh(X, Y, self.vof.M)
+        p4 = ax4.pcolormesh(X, Y, self.vof.phi)
+        p5 = ax5.pcolormesh(X, Y, self.vof.F_mask)
+        p6 = ax6.pcolormesh(X, Y, self.vof.I_mask)
+        p7 = ax7.pcolormesh(X, Y, self.vof.G_mask)
 
         cbar0 = plt.colorbar(p0, ax=ax0)
         cbar1 = plt.colorbar(p1, ax=ax1)
         cbar2 = plt.colorbar(p2, ax=ax2)
         cbar3 = plt.colorbar(p3, ax=ax3)
+        cbar4 = plt.colorbar(p4, ax=ax4)
+        cbar5 = plt.colorbar(p5, ax=ax5)
+        cbar6 = plt.colorbar(p6, ax=ax6)
+        cbar7 = plt.colorbar(p7, ax=ax7)
 
         cbar0.set_label(r"$\rho$", fontsize=14)
         cbar1.set_label(r"$u$", fontsize=14)
         cbar2.set_label(r"$v$", fontsize=14)
-        cbar3.set_label(r"$\phi$", fontsize=14)
+        cbar3.set_label(r"$M$", fontsize=14)
+        cbar4.set_label(r"$\phi$", fontsize=14)
+        cbar5.set_label("FLUID", fontsize=14)
+        cbar6.set_label("INTERFACE", fontsize=14)
+        cbar7.set_label("GAS", fontsize=14)
+
+        ax0.set_title(r"$\rho$", fontsize=16)
+        ax1.set_title(r"$u$", fontsize=16)
+        ax2.set_title(r"$v$", fontsize=16)
+        ax3.set_title(r"$M$", fontsize=16)
+        ax4.set_title(r"$\phi$", fontsize=16)
+        ax5.set_title("FLUID", fontsize=16)
+        ax6.set_title("INTERFACE", fontsize=16)
+        ax7.set_title("GAS", fontsize=16)
 
         cbar0.ax.tick_params(labelsize=13)
         cbar1.ax.tick_params(labelsize=13)
         cbar2.ax.tick_params(labelsize=13)
         cbar3.ax.tick_params(labelsize=13)
+        cbar4.ax.tick_params(labelsize=13)
+        cbar5.ax.tick_params(labelsize=13)
+        cbar6.ax.tick_params(labelsize=13)
+        cbar7.ax.tick_params(labelsize=13)
 
         ax0.tick_params(labelsize=13)
         ax1.tick_params(labelsize=13)
         ax2.tick_params(labelsize=13)
         ax3.tick_params(labelsize=13)
+        ax4.tick_params(labelsize=13)
+        ax5.tick_params(labelsize=13)
+        ax6.tick_params(labelsize=13)
+        ax7.tick_params(labelsize=13)
 
         ax[0][0].set_ylabel(r"$y$", fontsize=14)
         ax[1][0].set_ylabel(r"$y$", fontsize=14)
 
         ax[1][0].set_xlabel(r"$x$", fontsize=14)
         ax[1][1].set_xlabel(r"$x$", fontsize=14)
+        ax[1][2].set_xlabel(r"$x$", fontsize=14)
+        ax[1][3].set_xlabel(r"$x$", fontsize=14)
+
+        plt.suptitle(f"time = {self.clock:.3f} s")
 
         plt.tight_layout()
         if path is not None:
