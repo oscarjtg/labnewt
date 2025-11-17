@@ -1,10 +1,16 @@
+import numpy as np
+from numpy.typing import NDArray
+
 from ._shift import periodic_shift
+from .stencil import Stencil
 
 
 class Streamer:
-    def stream(self, fi, fo, s):
+    def stream(
+        self, fi: NDArray[np.float64], fo: NDArray[np.float64], s: Stencil
+    ) -> None:
         """
-        Streams populations in array fo by directions s.ex and s.ey to array fi.
+        Streams particles in array `fo` by directions `s.ex` and `s.ey` to array `fi`.
 
             fi[q, y, x] = fo[q, y - s.ey[q], x - s.ex[q]]
 
@@ -13,13 +19,17 @@ class Streamer:
         Parameters
         ----------
         fi : np.ndarray
-            Three-dimensional numpy array containing f_in[q, y, x]
-
+            Three-dimensional numpy array of floats of shape (nq, ny, nx).
+            Contains incoming particle distribution functions.
         fo : np.ndarray
-            Three-dimensional numpy array containing f_out[q, y, x]
-
+            Three-dimensional numpy array of floats of shape (nq, ny, nx).
+            Contains outgoing particle distribution functions.
         s : Stencil
             Lattice stencil
+
+        Returns
+        -------
+        None
         """
         for q in range(s.nq):
             fi[q, :, :] = periodic_shift(fo[q, :, :], s, q)
