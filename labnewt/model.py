@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ._equilibrium import _feq2
+from ._vof import VolumeOfFluid
+from .boundary import FreeSurface
 from .collider import ColliderSRT
 from .macroscopic import Macroscopic
 from .stencil import StencilD2Q9
@@ -188,7 +190,17 @@ class Model:
 
 class FreeSurfaceModel(Model):
     def __init__(
-        self, nx, ny, dx, dt, nu, stencil=None, streamer=None, collider=None, quiet=True
+        self,
+        nx,
+        ny,
+        dx,
+        dt,
+        nu,
+        rho_G=1.0,
+        stencil=None,
+        streamer=None,
+        collider=None,
+        quiet=True,
     ):
         super().__init__(
             nx,
@@ -201,12 +213,8 @@ class FreeSurfaceModel(Model):
             collider=collider,
             quiet=quiet,
         )
-        self.phi = np.ones(self.shape)
-        self.GAS = np.zeros(self.shape, dtype=np.bool)
-        self.FLUID = np.zeros(self.shape, dtype=np.bool)
-        self.INTERFACE = np.zeros(self.shape, dtype=np.bool)
-        self.nx = np.zeros(self.shape)
-        self.ny = np.zeros(self.shape)
+        self.vof = VolumeOfFluid(self.shape, self.stencil)
+        self.fsbc = FreeSurface(rho_G)
 
     def set_phi(self, source, *args):
         """
@@ -216,7 +224,7 @@ class FreeSurfaceModel(Model):
         If source is a function with signature (x, y, *args),
         set phi to values evaluated by the function.
         """
-        self._set(self.phi, source, *args)
+        self._set(self.vof.phi, source, *args)
 
     def _phi_from_eta(self, eta_array, interface_width=1):
         """
@@ -274,18 +282,55 @@ class FreeSurfaceModel(Model):
         else:
             assert eta_source.shape == self.x.shape
             eta[:] = eta_source
-        self.phi = self._phi_from_eta(eta)
+        self.vof.phi = self._phi_from_eta(eta)
 
-    def _set_masks(self):
-        np.less_equal(self.phi, 0.0, out=self.GAS)
-        np.greater_equal(self.phi, 1.0, out=self.FLUID)
-        np.logical_not(np.logical_or(self.GAS, self.FLUID), out=self.INTERFACE)
+    def print_integrals(self):
+        print(f"sum_(y,x) density[y, x]    = {np.sum(self.r):.3f}")
+        print(f"sum_(y,x) velocity_X[y, x] = {np.sum(self.u):.3f}")
+        print(f"sum_(y,x) velocity_Y[y, x] = {np.sum(self.v):.3f}")
+        print(f"sum_(y,x) phi[y, x]        = {np.sum(self.vof.phi):.3f}")
+        print(f"sum_(y,x) M[y, x]          = {np.sum(self.vof.M):.3f}")
+        print(f"# of FLUID cells           = {np.sum(self.vof.F_mask)}")
+        print(f"# of INTERFACE cells       = {np.sum(self.vof.I_mask)}")
+        print(f"# of GAS cells             = {np.sum(self.vof.G_mask)}")
 
-    def _surface_normal(self):
-        self.ny, self.nx = -np.gradient(self.phi)
-        magnitude = np.linalg.norm(self.nx, self.ny)
-        self.nx[self.INTERFACE] = self.nx[self.INTERFACE] / magnitude[self.INTERFACE]
-        self.ny[self.INTERFACE] = self.ny[self.INTERFACE] / magnitude[self.INTERFACE]
+    def _initialise(self):
+        """Initialise model."""
+        self._initialise_feq2()
+        self.vof.initialise(self.r)
+
+    def _step(self):
+        """Perform one time step of lattice Boltzmann algorithm."""
+        # Collision step
+        self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
+
+        # Apply forcing terms
+        for force in self.forcings:
+            force.apply(self.fo, self.stencil, self.macros)
+
+        # Stream step
+        self.streamer.stream(self.fi, self.fo, self.stencil)
+
+        # Apply boundary conditions.
+        self.fsbc.apply(
+            self.fi,
+            self.fo,
+            self.stencil,
+            self.u,
+            self.v,
+            self.vof.I_mask,
+            self.vof.G_mask,
+        )
+        for bc in self.boundary_conditions:
+            bc.apply(self.fi, self.fo, self.stencil)
+
+        # Compute new macroscopic variables
+        self.macros.density(self.r, self.fi)
+        self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
+        self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
+
+        # Update free surface
+        self.vof.step(self.fo, self.r, self.stencil)
 
     def plot_fields(self, path=None):
         """
@@ -314,7 +359,7 @@ class FreeSurfaceModel(Model):
         p0 = ax0.pcolormesh(X, Y, self.r)
         p1 = ax1.pcolormesh(X, Y, self.u)
         p2 = ax2.pcolormesh(X, Y, self.v)
-        p3 = ax3.pcolormesh(X, Y, self.phi)
+        p3 = ax3.pcolormesh(X, Y, self.vof.phi)
 
         cbar0 = plt.colorbar(p0, ax=ax0)
         cbar1 = plt.colorbar(p1, ax=ax1)

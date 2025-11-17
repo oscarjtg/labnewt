@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from labnewt import Streamer
 from labnewt.stencil import Stencil
+from labnewt.streamer import Streamer
 
 
 def _distribute_Mex(

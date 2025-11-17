@@ -25,3 +25,30 @@ def _feq2(r, u, v, s):
         * r[None, :, :]
         * (1 + 3 * cu + 4.5 * cu**2 - 1.5 * uu[None, :, :])
     )
+
+
+def _feq2_q(q, r, u, v, s):
+    """
+    Compute the 2nd-order equilibrium distribution function.
+
+    Parameters
+    ----------
+    q : int
+        Lattice vector index.
+    r : np.ndarray
+        Two-dimensional array containing the fluid density.
+    u : np.ndarray
+        Two-dimensional array containing the x-component of the fluid velocity.
+    v : np.ndarray
+        Two-dimensional array containing the y-component of the fluid velocity.
+    s : Stencil
+        The lattice stencil.
+
+    Returns
+    -------
+    np.ndarray
+        Three-dimensional array containing equilibrium distribution function values.
+    """
+    cu = s.cx[q] * u + s.cy[q] * v[:, :]
+    uu = u**2 + v**2
+    return s.w[q] * r * (1 + 3 * cu + 4.5 * cu**2 - 1.5 * uu)
