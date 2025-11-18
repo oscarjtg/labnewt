@@ -12,7 +12,6 @@ from labnewt import (
 )
 from labnewt.diagnostics import average_difference
 
-
 if __name__ == "__main__":
     nx = 2  # number of grid points in x direction
     ny = 20  # number of grid points in y direction
@@ -61,13 +60,14 @@ if __name__ == "__main__":
     v_err = average_difference(model.vof.phi * model.v, phi * v0)
     r_err = average_difference(model.vof.phi * model.r, phi * r0)
 
-    error_dict = {"phi    ": phi_err,
-                  "u      ": u_err,
-                  "v      ": v_err,
-                  "density": r_err
-                  }
+    error_dict = {
+        "phi    ": phi_err,
+        "u      ": u_err,
+        "v      ": v_err,
+        "density": r_err,
+    }
 
-    for (key, val) in error_dict.items():
+    for key, val in error_dict.items():
         print(f"Average element-wise change in {key} = {val:.12f}")
 
     model.plot_fields()

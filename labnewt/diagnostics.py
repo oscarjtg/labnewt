@@ -4,7 +4,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-def relative_error(X_approx, X_ref):
+def relative_error(X_approx: NDArray[np.float64], X_ref: NDArray[np.float64]) -> float:
     """
     Computes the L2 error norm of `X_approx` comapred to `X_ref`.
 
@@ -27,7 +27,9 @@ def relative_error(X_approx, X_ref):
     return np.linalg.norm(X_approx - X_ref) / np.linalg.norm(X_ref)
 
 
-def average_difference(X_approx, X_ref, mask=None):
+def average_difference(
+    X_approx: NDArray[np.float64], X_ref: NDArray[np.float64], mask=None
+) -> float:
     """
     Computes the average element-wise absolute difference in the input arrays.
 
@@ -42,7 +44,7 @@ def average_difference(X_approx, X_ref, mask=None):
         Difference = sum_k (X_approx[k] - X_ref[k]) * mask[k] / N
 
     where N is the number of `True` values in the `mask`.
-    
+
     Parameters
     ----------
     X_approx : NDArray[np.float64]

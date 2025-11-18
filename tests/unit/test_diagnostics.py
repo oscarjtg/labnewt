@@ -1,6 +1,6 @@
 import numpy as np
 
-from labnewt.diagnostics import relative_error, average_difference
+from labnewt.diagnostics import average_difference, relative_error
 
 
 def test_relative_error_no_difference():

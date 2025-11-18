@@ -85,7 +85,7 @@ class Simulation:
         end0 = time.perf_counter()
         if print_progress:
             print(f"Model initialisation complete in {end0 - start0:.6f} seconds")
-        
+
         # Run first time step of model, and time it.
         start1 = time.perf_counter()
         self.model._step()
@@ -120,7 +120,10 @@ class Simulation:
             if converged:
                 print(f"Model converged after {self.timestep} timesteps.")
             else:
-                print(f"WARNING: model did NOT converge after {self.timestep} timesteps!")
+                msg = (
+                    f"WARNING: model did NOT converge after {self.timestep} timesteps!"
+                )
+                print(msg)
             print(f"Model bulk time to complete:  {bulk_time_taken:.2f} seconds")
             print(f"Model total time to complete: {total_time_taken:.2f} seconds")
             print("--------------------------------------------------")
