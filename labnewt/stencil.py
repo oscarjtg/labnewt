@@ -1,7 +1,11 @@
 import numpy as np
 
 
-class StencilD2Q9:
+class Stencil:
+    pass
+
+
+class StencilD2Q9(Stencil):
     nq = 9
     ex = np.array([0, 1, -1, 0, 0, 1, -1, -1, 1], dtype=np.int64)
     ey = np.array([0, 0, 0, 1, -1, 1, -1, 1, -1], dtype=np.int64)
