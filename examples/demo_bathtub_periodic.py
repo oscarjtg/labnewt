@@ -39,7 +39,7 @@ if __name__ == "__main__":
     rho = np.full_like(phi, rho0)
     II, JJ = np.meshgrid(np.arange(nx), np.arange(ny))
     rho -= 3 * g * (JJ - j_surf) * dx
-    model.set_r(rho)
+    # model.set_r(rho)
 
     model._initialise()
     model.print_means()

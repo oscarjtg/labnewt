@@ -102,6 +102,13 @@ class Model:
         """
         self._set(self.r, source, *args)
 
+    def _set_f(self, source, *args):
+        """
+        Sets fi and fo. For unit tests only. Should not be used.
+        """
+        self._set(self.fi, source, *args)
+        self._set(self.fo, source, *args)
+
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
@@ -109,7 +116,7 @@ class Model:
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply(self.fo, self.stencil, self.macros)
+            force.apply(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -335,7 +342,7 @@ class FreeSurfaceModel(Model):
 
             # Apply forcing terms
             for force in self.forcings:
-                force.apply(self.fo, self.stencil, self.macros)
+                force.apply(self)
 
             # Stream step
             self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -370,7 +377,7 @@ class FreeSurfaceModel(Model):
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply(self.fo, self.stencil, self.macros)
+            force.apply(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
