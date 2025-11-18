@@ -37,6 +37,21 @@ class ConstantGravityForce:
         self._set_Fx_Fy()
 
     def apply(self, model):
+        """
+        Applies constant, uniform force to `model.fo`.
+
+        Modifies `model.fo` array in-place.
+        All other `model` attributes remain unchanged.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object, or an object that inherits from Model.
+
+        Returns
+        -------
+        None
+        """
         model.macros.force_distribution_constant(
             model.fo, self.Fx, self.Fy, model.stencil
         )

@@ -7,6 +7,7 @@ from ._equilibrium import _feq2
 from ._vof import VolumeOfFluid
 from .boundary import FreeSurface
 from .collider import ColliderSRT
+from .force import Force
 from .macroscopic import Macroscopic
 from .stencil import StencilD2Q9
 from .streamer import Streamer
@@ -147,7 +148,7 @@ class Model:
         """Adds bc to self.boundary_conditions list."""
         self.boundary_conditions.append(bc)
 
-    def add_forcing(self, force):
+    def add_forcing(self, force: Force):
         """Adds force to self.forcings list."""
         self.forcings.append(force)
 
