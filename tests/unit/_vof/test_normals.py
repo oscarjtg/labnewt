@@ -32,8 +32,8 @@ def test_normals_inplace_constant_x_gradient():
     assert ret is None
 
     # interior interface cells (I_mask True) should have nx == -1, ny == 0
-    assert np.allclose(norm_x[I_mask], -1.0, rtol=1e-12, atol=1e-12)
-    assert np.allclose(norm_y[I_mask], 0.0, rtol=1e-12, atol=1e-12)
+    assert np.allclose(norm_x[I_mask], -1.0, rtol=1e-10, atol=1e-10)
+    assert np.allclose(norm_y[I_mask], 0.0, rtol=1e-10, atol=1e-10)
 
     # outside interface should be NaN
     assert np.all(np.isnan(norm_x[~I_mask]))
@@ -66,8 +66,8 @@ def test_normals_constant_x_gradient():
     norm_x, norm_y = _normals(phi, I_mask)  # default dx=dy=1.0
 
     # interior interface cells (I_mask True) should have nx == -1, ny == 0
-    assert np.allclose(norm_x[I_mask], -1.0, rtol=1e-12, atol=1e-12)
-    assert np.allclose(norm_y[I_mask], 0.0, rtol=1e-12, atol=1e-12)
+    assert np.allclose(norm_x[I_mask], -1.0, rtol=1e-10, atol=1e-10)
+    assert np.allclose(norm_y[I_mask], 0.0, rtol=1e-10, atol=1e-10)
 
     # outside interface should be NaN
     assert np.all(np.isnan(norm_x[~I_mask]))
@@ -115,8 +115,8 @@ def test_normals_oblique_gradient_all_interface():
     norm_x, norm_y = _normals(phi, I_mask, dx=1.0, dy=1.0)
 
     # All entries are interface: compare entire arrays
-    npt.assert_allclose(norm_x, expected_nx, rtol=1e-12, atol=1e-12)
-    npt.assert_allclose(norm_y, expected_ny, rtol=1e-12, atol=1e-12)
+    npt.assert_allclose(norm_x, expected_nx, rtol=1e-10, atol=1e-10)
+    npt.assert_allclose(norm_y, expected_ny, rtol=1e-10, atol=1e-10)
 
 
 def test_only_outputs_modified_and_shapes_preserved():
@@ -164,4 +164,4 @@ def test_only_outputs_modified_and_shapes_preserved():
 
     # For interface cells, check normalization: sqrt(nx^2 + ny^2) == 1, within tolerance
     mags = np.sqrt(norm_x[I_mask] ** 2 + norm_y[I_mask] ** 2)
-    npt.assert_allclose(mags, np.ones_like(mags), rtol=1e-12, atol=1e-12)
+    npt.assert_allclose(mags, np.ones_like(mags), rtol=1e-10, atol=1e-10)

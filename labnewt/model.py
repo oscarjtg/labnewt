@@ -49,6 +49,7 @@ class Model:
 
         self.boundary_conditions = []
         self.forcings = []
+        self.initialised = False
 
         if not quiet:
             print("Model instance created with:")
@@ -133,6 +134,7 @@ class Model:
         """Initialise model."""
         self._initialise_feq2()
         self.clock = 0.0
+        self.initialised = True
 
     def add_boundary_condition(self, bc):
         """Adds bc to self.boundary_conditions list."""
@@ -302,16 +304,16 @@ class FreeSurfaceModel(Model):
         print(f"# of GAS cells             = {np.sum(self.vof.G_mask)}")
 
     def print_means(self):
-        print(f"mean density[y, x]    = {np.mean(self.r):.3f}")
-        print(f"mean velocity_X[y, x] = {np.mean(self.u):.3f}")
-        print(f"mean velocity_Y[y, x] = {np.mean(self.v):.3f}")
-        print(f"mean phi[y, x]        = {np.mean(self.vof.phi):.3f}")
-        print(f"mean M[y, x]          = {np.mean(self.vof.M):.3f}")
-        print(f"% FLUID cells         = {np.mean(self.vof.F_mask)*100:.2f}")
-        print(f"% of INTERFACE cells  = {np.mean(self.vof.I_mask)*100:.2f}")
-        print(f"% of GAS cells        = {np.mean(self.vof.G_mask)*100:.2f}")
+        print(f"mean density[y, x]    = {np.mean(self.r):.6f}")
+        print(f"mean velocity_X[y, x] = {np.mean(self.u):.6f}")
+        print(f"mean velocity_Y[y, x] = {np.mean(self.v):.6f}")
+        print(f"mean phi[y, x]        = {np.mean(self.vof.phi):.6f}")
+        print(f"mean M[y, x]          = {np.mean(self.vof.M):.6f}")
+        print(f"% FLUID cells         = {np.mean(self.vof.F_mask)*100:.4f}")
+        print(f"% of INTERFACE cells  = {np.mean(self.vof.I_mask)*100:.4f}")
+        print(f"% of GAS cells        = {np.mean(self.vof.G_mask)*100:.4f}")
 
-    def _initialise(self):
+    def _initialise(self, do_mei=False):
         """Initialise model."""
         self._initialise_feq2()
         self.vof.initialise(self.r)
@@ -322,7 +324,7 @@ class FreeSurfaceModel(Model):
         fi_old = np.empty_like(self.fi)
         number_of_iterations = 0
 
-        while not np.allclose(self.fi, fi_old, atol=1.0e-12):
+        while do_mei and not np.allclose(self.fi, fi_old, atol=1.0e-12):
             number_of_iterations += 1
             fi_old[:] = self.fi
 
@@ -357,8 +359,9 @@ class FreeSurfaceModel(Model):
             # Do not update free surface!
             self.vof.M = self.vof.phi * self.r
 
-        print(f"Initialisation complete after {number_of_iterations} iterations.")
         self.clock = 0.0
+        self.initialised = True
+        return number_of_iterations
 
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
