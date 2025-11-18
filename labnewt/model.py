@@ -7,6 +7,7 @@ from ._equilibrium import _feq2
 from ._vof import VolumeOfFluid
 from .boundary import FreeSurface
 from .collider import ColliderSRT
+from .force import Force
 from .macroscopic import Macroscopic
 from .stencil import StencilD2Q9
 from .streamer import Streamer
@@ -102,6 +103,13 @@ class Model:
         """
         self._set(self.r, source, *args)
 
+    def _set_f(self, source, *args):
+        """
+        Sets fi and fo. For unit tests only. Should not be used.
+        """
+        self._set(self.fi, source, *args)
+        self._set(self.fo, source, *args)
+
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
@@ -109,7 +117,7 @@ class Model:
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply(self.fo, self.stencil, self.macros)
+            force.apply(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -140,7 +148,7 @@ class Model:
         """Adds bc to self.boundary_conditions list."""
         self.boundary_conditions.append(bc)
 
-    def add_forcing(self, force):
+    def add_forcing(self, force: Force):
         """Adds force to self.forcings list."""
         self.forcings.append(force)
 
@@ -335,7 +343,7 @@ class FreeSurfaceModel(Model):
 
             # Apply forcing terms
             for force in self.forcings:
-                force.apply(self.fo, self.stencil, self.macros)
+                force.apply(self)
 
             # Stream step
             self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -370,7 +378,7 @@ class FreeSurfaceModel(Model):
 
         # Apply forcing terms
         for force in self.forcings:
-            force.apply(self.fo, self.stencil, self.macros)
+            force.apply(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)

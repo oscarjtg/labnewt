@@ -3,6 +3,12 @@
 import numpy as np
 
 
+class Force:
+    def apply(self, model):
+        """Apply the force to the model. Subclasses override."""
+        raise NotImplementedError
+
+
 class ConstantGravityForce:
     def __init__(self, dx, dt, g_magnitude=9.81, ex=0, ey=-1):
         self.dx = dx
@@ -30,5 +36,22 @@ class ConstantGravityForce:
         self._set_ex_ey(ex, ey)
         self._set_Fx_Fy()
 
-    def apply(self, f, s, macros):
-        macros.force_distribution_constant(f, self.Fx, self.Fy, s)
+    def apply(self, model):
+        """
+        Applies constant, uniform force to `model.fo`.
+
+        Modifies `model.fo` array in-place.
+        All other `model` attributes remain unchanged.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object, or an object that inherits from Model.
+
+        Returns
+        -------
+        None
+        """
+        model.macros.force_distribution_constant(
+            model.fo, self.Fx, self.Fy, model.stencil
+        )
