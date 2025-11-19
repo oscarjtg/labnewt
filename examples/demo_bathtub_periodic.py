@@ -5,7 +5,6 @@ import numpy as np
 
 from labnewt import (
     BottomWallNoSlip,
-    ConstantGravityForce,
     FreeSurfaceModel,
     GravityForce,
     Simulation,

@@ -1,7 +1,5 @@
 """Force classes."""
 
-import numpy as np
-
 from .gravity import Gravity
 
 
@@ -91,7 +89,7 @@ class GravityForce(ConstantGravityForce):
         """
         self.Fx = self.Cg * self.gravity.gx * model.r
         self.Fy = self.Cg * self.gravity.gy * model.r
-        if model.vof:
+        if hasattr(model, "vof"):
             self.Fx *= model.vof.phi
             self.Fy *= model.vof.phi
         model.macros.force_distribution_constant(

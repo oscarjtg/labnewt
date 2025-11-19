@@ -1,6 +1,13 @@
 import numpy as np
 
-from labnewt import ConstantGravityForce, Macroscopic, Model, StencilD2Q9
+from labnewt import (
+    ConstantGravityForce,
+    FreeSurfaceModel,
+    GravityForce,
+    Macroscopic,
+    Model,
+    StencilD2Q9,
+)
 from labnewt._moments import _m0, _mx, _my
 
 
@@ -75,6 +82,74 @@ def test_constant_gravity_force_conserves_moments():
     model.set_r(r_pre)
     model.set_u(u_pre)
     model.set_v(v_pre)
+    model._set_f(f)
+
+    force.apply(model)
+    f[:] = model.fo
+    r_post = _m0(f)
+    u_post = (_mx(f, s) - force.Fx) / r_post
+    v_post = (_my(f, s) - force.Fy) / r_post
+
+    assert np.allclose(r_pre, r_post, atol=1.0e-12)
+    assert np.allclose(u_pre, u_post, atol=1.0e-12)
+    assert np.allclose(v_pre, v_post, atol=1.0e-12)
+
+
+def test_gravity_force_conserves_moments():
+    nx = 10
+    ny = 10
+    shape = (nx, ny)
+    dx = 0.1
+    dt = 0.1
+    nu = 0.1
+    force = GravityForce(dx, dt)
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    model = Model(nx, ny, dx, dt, nu, stencil=s, macros=macros)
+
+    f = np.random.rand(s.nq, *shape)
+    r_pre = _m0(f)
+    u_pre = _mx(f, s) / r_pre
+    v_pre = _my(f, s) / r_pre
+
+    model.set_r(r_pre)
+    model.set_u(u_pre)
+    model.set_v(v_pre)
+    model._set_f(f)
+
+    force.apply(model)
+    f[:] = model.fo
+    r_post = _m0(f)
+    u_post = (_mx(f, s) - force.Fx) / r_post
+    v_post = (_my(f, s) - force.Fy) / r_post
+
+    assert np.allclose(r_pre, r_post, atol=1.0e-12)
+    assert np.allclose(u_pre, u_post, atol=1.0e-12)
+    assert np.allclose(v_pre, v_post, atol=1.0e-12)
+
+
+def test_gravity_force_free_surface_model_conserves_moments():
+    nx = 10
+    ny = 10
+    shape = (nx, ny)
+    dx = 0.1
+    dt = 0.1
+    nu = 0.1
+    force = GravityForce(dx, dt)
+    macros = Macroscopic()
+    s = StencilD2Q9()
+    model = FreeSurfaceModel(nx, ny, dx, dt, nu, stencil=s, macros=macros)
+
+    f = np.random.rand(s.nq, *shape)
+    r_pre = _m0(f)
+    u_pre = _mx(f, s) / r_pre
+    v_pre = _my(f, s) / r_pre
+    phi = np.random.random(shape)
+
+    model.set_r(r_pre)
+    model.set_u(u_pre)
+    model.set_v(v_pre)
+    model.set_phi(phi)
     model._set_f(f)
 
     force.apply(model)

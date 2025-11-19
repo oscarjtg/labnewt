@@ -217,6 +217,7 @@ class FreeSurfaceModel(Model):
         stencil=None,
         streamer=None,
         collider=None,
+        macros=None,
         quiet=True,
     ):
         super().__init__(
@@ -228,6 +229,7 @@ class FreeSurfaceModel(Model):
             stencil=stencil,
             streamer=streamer,
             collider=collider,
+            macros=macros,
             quiet=quiet,
         )
         self.vof = VolumeOfFluid(self.shape, self.stencil)
