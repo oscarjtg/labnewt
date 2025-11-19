@@ -7,7 +7,7 @@ from .boundary import (
     TopWallNoSlip,
 )
 from .collider import ColliderSRT
-from .force import ConstantGravityForce
+from .force import ConstantGravityForce, GravityForce
 from .gravity import Gravity
 from .macroscopic import Macroscopic
 from .model import FreeSurfaceModel, Model
@@ -17,6 +17,7 @@ from .streamer import Streamer
 
 __all__ = [
     "ConstantGravityForce",
+    "GravityForce",
     "Gravity",
     "StencilD2Q9",
     "Streamer",

@@ -26,7 +26,7 @@ class ConstantGravityForce(Force):
         dt : float
             Float giving time step.
         g_magnitude : float, optional
-            Float giving magnitude of gravitational acceleration, 
+            Float giving magnitude of gravitational acceleration,
             in physical units.
         direction : tuple, optional
             Tuple of floats giving direction of gravitational force.
@@ -40,7 +40,7 @@ class ConstantGravityForce(Force):
     def _set_force_components(self):
         self.Fx = self.Cg * self.gravity.gx
         self.Fy = self.Cg * self.gravity.gy
-        
+
     def set_gravity_magnitude(self, magnitude):
         """Sets the magnitude of the gravity vector."""
         self.gravity.set_gravity(magnitude=magnitude)
@@ -75,14 +75,14 @@ class ConstantGravityForce(Force):
 class GravityForce(ConstantGravityForce):
     def apply(self, model):
         """
-        Applies gravitational force weighted by `model.r` to `model.fo`.
+        Applies gravitational force weighted by density and fill fraction.
 
         Modifies `model.fo` array in-place.
         All other `model` attributes remain unchanged.
 
         Parameters
         ----------
-        model : Model
+        model : Model or FreeSurfaceModel
             A Model object, or an object that inherits from Model.
 
         Returns
@@ -91,6 +91,9 @@ class GravityForce(ConstantGravityForce):
         """
         self.Fx = self.Cg * self.gravity.gx * model.r
         self.Fy = self.Cg * self.gravity.gy * model.r
+        if model.vof:
+            self.Fx *= model.vof.phi
+            self.Fy *= model.vof.phi
         model.macros.force_distribution_constant(
             model.fo, self.Fx, self.Fy, model.stencil
         )
