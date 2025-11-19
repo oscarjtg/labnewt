@@ -56,4 +56,6 @@ class Gravity:
         if direction:
             assert len(direction) == 2
             dir = direction
-        self.gx, self.gy = mag * dir / np.hypot(*dir)
+        mag_of_dir = np.hypot(*dir)
+        self.gx = mag * dir[0] / mag_of_dir
+        self.gy = mag * dir[1] / mag_of_dir
