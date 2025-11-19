@@ -7,7 +7,7 @@ import numpy as np
 
 
 class Gravity:
-    def __init__(self, gx=0.0, gy=9.81):
+    def __init__(self, gx=0.0, gy=-9.81):
         """
         Initialise instance of Gravity.
 
@@ -18,7 +18,7 @@ class Gravity:
             Default = 0.0.
         gy : float, optional
             Float giving y-component of gravity vector.
-            Default = 9.81.
+            Default = -9.81.
         """
         self.gx = gx
         self.gy = gy
