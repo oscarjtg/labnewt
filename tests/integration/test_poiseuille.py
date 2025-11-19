@@ -50,7 +50,7 @@ def test_poiseuille_vertical_down():
     ny = 1
 
     model = Model(nx, ny, dx, dt, nu, quiet=False)
-    gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
+    gravity = ConstantGravityForce(dx, dt, abs(gy), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(LeftWallNoSlip())
     model.add_boundary_condition(RightWallNoSlip())
@@ -78,7 +78,7 @@ def test_poiseuille_vertical_up():
     ny = 1
 
     model = Model(nx, ny, dx, dt, nu, quiet=False)
-    gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
+    gravity = ConstantGravityForce(dx, dt, abs(gy), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(LeftWallNoSlip())
     model.add_boundary_condition(RightWallNoSlip())
@@ -106,7 +106,7 @@ def test_poiseuille_horizontal():
     ny = int(L / dx)
 
     model = Model(nx, ny, dx, dt, nu, quiet=False)
-    gravity = ConstantGravityForce(dx, dt, abs(gx), gx, gy)
+    gravity = ConstantGravityForce(dx, dt, abs(gx), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
     model.add_boundary_condition(TopWallNoSlip())

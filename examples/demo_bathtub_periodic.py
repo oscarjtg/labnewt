@@ -5,8 +5,8 @@ import numpy as np
 
 from labnewt import (
     BottomWallNoSlip,
-    ConstantGravityForce,
     FreeSurfaceModel,
+    GravityForce,
     Simulation,
     TopWallNoSlip,
 )
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     g = 0.001  # gravitational acceleration
 
     model = FreeSurfaceModel(nx, ny, dx, dt, nu)
-    gravity = ConstantGravityForce(dx, dt, g)
+    gravity = GravityForce(dx, dt, g)
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
     model.add_boundary_condition(TopWallNoSlip())
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     r0 = np.copy(model.r)
 
     sim = Simulation(model, stop_time=tf)
-    sim.run_to_steady_state(int(tf), rtol=1.0e-10)
+    sim.run_to_steady_state(int(tf), rtol=1.0e-8)
 
     model.print_means()
 
