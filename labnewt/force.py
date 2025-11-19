@@ -11,7 +11,7 @@ class Force:
         raise NotImplementedError
 
 
-class ConstantGravityForce:
+class ConstantGravityForce(Force):
     def __init__(self, dx, dt, g_magnitude=9.81, direction=(0.0, -1.0)):
         """
         Initialises ConstantGravityForce class.
@@ -67,6 +67,30 @@ class ConstantGravityForce:
         -------
         None
         """
+        model.macros.force_distribution_constant(
+            model.fo, self.Fx, self.Fy, model.stencil
+        )
+
+
+class GravityForce(ConstantGravityForce):
+    def apply(self, model):
+        """
+        Applies gravitational force weighted by `model.r` to `model.fo`.
+
+        Modifies `model.fo` array in-place.
+        All other `model` attributes remain unchanged.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object, or an object that inherits from Model.
+
+        Returns
+        -------
+        None
+        """
+        self.Fx = self.Cg * self.gravity.gx * model.r
+        self.Fy = self.Cg * self.gravity.gy * model.r
         model.macros.force_distribution_constant(
             model.fo, self.Fx, self.Fy, model.stencil
         )
