@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from .gravity import Gravity
+
 
 class Force:
     def apply(self, model):
@@ -10,31 +12,44 @@ class Force:
 
 
 class ConstantGravityForce:
-    def __init__(self, dx, dt, g_magnitude=9.81, ex=0, ey=-1):
-        self.dx = dx
-        self.dt = dt
-        self._set_g_star(g_magnitude)
-        self._set_ex_ey(ex, ey)
-        self._set_Fx_Fy()
+    def __init__(self, dx, dt, g_magnitude=9.81, direction=(0.0, -1.0)):
+        """
+        Initialises ConstantGravityForce class.
 
-    def _set_g_star(self, g_magnitude):
-        self.g_star = np.abs(g_magnitude * self.dt**2 / self.dx)
+        Note that conversion factor Cg needed to convert
+        physical units to lattice units.
 
-    def _set_ex_ey(self, ex, ey):
-        self.ex = ex / np.sqrt(ex**2 + ey**2)
-        self.ey = ey / np.sqrt(ex**2 + ey**2)
+        Parameters
+        ----------
+        dx : float
+            Float giving grid spacing.
+        dt : float
+            Float giving time step.
+        g_magnitude : float, optional
+            Float giving magnitude of gravitational acceleration, 
+            in physical units.
+        direction : tuple, optional
+            Tuple of floats giving direction of gravitational force.
+        """
+        self.Cg = dt**2 / dx
+        self.gravity = Gravity()
+        self.gravity.set_gravity(magnitude=g_magnitude, direction=direction)
+        self.Fx = self.Cg * self.gravity.gx
+        self.Fy = self.Cg * self.gravity.gy
 
-    def _set_Fx_Fy(self):
-        self.Fx = self.g_star * self.ex
-        self.Fy = self.g_star * self.ey
+    def _set_force_components(self):
+        self.Fx = self.Cg * self.gravity.gx
+        self.Fy = self.Cg * self.gravity.gy
+        
+    def set_gravity_magnitude(self, magnitude):
+        """Sets the magnitude of the gravity vector."""
+        self.gravity.set_gravity(magnitude=magnitude)
+        self._set_force_components()
 
-    def set_gravity_magnitude(self, g_magnitude):
-        self._set_g_star(g_magnitude)
-        self._set_Fx_Fy()
-
-    def set_gravity_direction(self, ex, ey):
-        self._set_ex_ey(ex, ey)
-        self._set_Fx_Fy()
+    def set_gravity_direction(self, direction):
+        """Sets the direction of the gravity vector."""
+        self.gravity.set_gravity(direction=direction)
+        self._set_force_components()
 
     def apply(self, model):
         """

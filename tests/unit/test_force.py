@@ -37,7 +37,7 @@ def test_constant_gravity_force_set_direction_on_init():
     g = 10.0
     ex = -3.0
     ey = 4.0
-    force = ConstantGravityForce(dx, dt, g, ex, ey)
+    force = ConstantGravityForce(dx, dt, g, (ex, ey))
     assert np.isclose(force.Fx, -0.6, atol=1.0e-12)
     assert np.isclose(force.Fy, 0.8, atol=1.0e-12)
 
@@ -49,7 +49,7 @@ def test_constant_gravity_force_set_direction_after_init():
     ex = -3.0
     ey = 4.0
     force = ConstantGravityForce(dx, dt)
-    force.set_gravity_direction(ex, ey)
+    force.set_gravity_direction((ex, ey))
     force.set_gravity_magnitude(g)
     assert np.isclose(force.Fx, -0.6, atol=1.0e-12)
     assert np.isclose(force.Fy, 0.8, atol=1.0e-12)
