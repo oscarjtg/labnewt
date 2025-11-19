@@ -4,8 +4,8 @@ import numpy as np
 
 from labnewt import (
     BottomWallNoSlip,
-    GravityForce,
     FreeSurfaceModel,
+    GravityForce,
     Simulation,
     TopWallNoSlip,
 )

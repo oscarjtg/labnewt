@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from labnewt import (
     ConstantGravityForce,
@@ -9,6 +10,7 @@ from labnewt import (
     StencilD2Q9,
 )
 from labnewt._moments import _m0, _mx, _my
+from labnewt.force import Force
 
 
 def test_constant_gravity_force_default():
@@ -161,3 +163,14 @@ def test_gravity_force_free_surface_model_conserves_moments():
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)
     assert np.allclose(v_pre, v_post, atol=1.0e-12)
+
+
+def test_force_apply_raises_notimplemented():
+    force = Force()
+
+    class DummyModel:
+        pass
+
+    model = DummyModel()
+    with pytest.raises(NotImplementedError):
+        force.apply(model)
