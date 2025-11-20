@@ -95,7 +95,7 @@ def test_force_distribution_array_with_zeros():
     f0 = np.copy(f)
     Fx = np.zeros(shape)
     Fy = np.zeros(shape)
-    macros.force_distribution_array(f, Fx, Fy, s)
+    macros.forcing(f, Fx, Fy, s)
 
     # With zero force, expect no change to f
     assert np.allclose(f, f0, atol=1.0e-12)
@@ -113,7 +113,7 @@ def test_force_distribution_constant_with_zeros():
     f0 = np.copy(f)
     Fx = 0.0
     Fy = 0.0
-    macros.force_distribution_constant(f, Fx, Fy, s)
+    macros.forcing(f, Fx, Fy, s)
 
     # With zero force, expect no change to f
     assert np.allclose(f, f0, atol=1.0e-12)

@@ -65,7 +65,7 @@ class ConstantGravityForce(Force):
         -------
         None
         """
-        model.macros.force_distribution_constant(
+        model.macros.forcing(
             model.fo, self.Fx, self.Fy, model.stencil
         )
 
@@ -92,6 +92,6 @@ class GravityForce(ConstantGravityForce):
         if hasattr(model, "vof"):
             self.Fx *= model.vof.phi
             self.Fy *= model.vof.phi
-        model.macros.force_distribution_constant(
+        model.macros.forcing(
             model.fo, self.Fx, self.Fy, model.stencil
         )
