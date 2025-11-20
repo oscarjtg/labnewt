@@ -8,7 +8,7 @@ from ._vof import VolumeOfFluid
 from .boundary import FreeSurface
 from .collider import ColliderSRT
 from .force import Force
-from .macroscopic import Macroscopic
+from .macroscopic import MacroscopicStandard
 from .stencil import StencilD2Q9
 from .streamer import Streamer
 
@@ -30,7 +30,7 @@ class Model:
         self.stencil = StencilD2Q9() if stencil is None else stencil
         self.streamer = Streamer() if streamer is None else streamer
         self.collider = ColliderSRT(nu, dx, dt) if collider is None else collider
-        self.macros = Macroscopic() if macros is None else macros
+        self.macros = MacroscopicStandard() if macros is None else macros
 
         self.nx = nx
         self.ny = ny
@@ -47,6 +47,8 @@ class Model:
         self.r = np.ones(self.shape)
         self.fi = np.zeros((self.stencil.nq, *self.shape))
         self.fo = np.zeros_like(self.fi)
+        self.Fx = np.zeros(self.shape)
+        self.Fy = np.zeros(self.shape)
 
         self.boundary_conditions = []
         self.forcings = []
@@ -115,9 +117,14 @@ class Model:
         # Collision step
         self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
 
-        # Apply forcing terms
+        # Compute force arrays.
+        self.Fx.fill(0.0)
+        self.Fy.fill(0.0)
         for force in self.forcings:
             force.apply(self)
+
+        # Apply forcing source term to distribution functions
+        self.macros.forcing(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -127,9 +134,9 @@ class Model:
             bc.apply(self.fi, self.fo, self.stencil)
 
         # Compute new macroscopic variables
-        self.macros.density(self.r, self.fi)
-        self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
-        self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
+        self.macros.density(self)
+        self.macros.velocity_x(self)
+        self.macros.velocity_y(self)
 
         # Update time
         self.clock += self.dt
@@ -343,9 +350,14 @@ class FreeSurfaceModel(Model):
                 self.fo, self.fi, self.r, self.u, self.v, self.stencil
             )
 
-            # Apply forcing terms
+            # Compute force arrays.
+            self.Fx.fill(0.0)
+            self.Fy.fill(0.0)
             for force in self.forcings:
                 force.apply(self)
+
+            # Apply forcing source term to distribution functions
+            self.macros.forcing(self)
 
             # Stream step
             self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -364,7 +376,7 @@ class FreeSurfaceModel(Model):
                 bc.apply(self.fi, self.fo, self.stencil)
 
             # Compute new density, but not velocity.
-            self.macros.density(self.r, self.fi)
+            self.macros.density(self)
 
             # Do not update free surface!
             self.vof.M = self.vof.phi * self.r
@@ -378,9 +390,14 @@ class FreeSurfaceModel(Model):
         # Collision step
         self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
 
-        # Apply forcing terms
+        # Compute force arrays.
+        self.Fx.fill(0.0)
+        self.Fy.fill(0.0)
         for force in self.forcings:
             force.apply(self)
+
+        # Apply forcing source term to distribution functions
+        self.macros.forcing(self)
 
         # Stream step
         self.streamer.stream(self.fi, self.fo, self.stencil)
@@ -399,9 +416,9 @@ class FreeSurfaceModel(Model):
             bc.apply(self.fi, self.fo, self.stencil)
 
         # Compute new macroscopic variables
-        self.macros.density(self.r, self.fi)
-        self.macros.velocity_x(self.u, self.r, self.fi, self.stencil)
-        self.macros.velocity_y(self.v, self.r, self.fi, self.stencil)
+        self.macros.density(self)
+        self.macros.velocity_x(self)
+        self.macros.velocity_y(self)
 
         # Update free surface
         self.vof.step(self.fo, self.r, self.stencil)

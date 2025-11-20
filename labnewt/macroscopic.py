@@ -2,83 +2,77 @@ from ._moments import _m0, _mx, _my
 
 
 class Macroscopic:
-    def density(self, r, f):
+    def density(self, model):
+        raise NotImplementedError
+
+    def velocity_x(self, model):
+        raise NotImplementedError
+
+    def velocity_y(self, model):
+        raise NotImplementedError
+
+    def forcing(self, model):
+        raise NotImplementedError
+
+
+class MacroscopicStandard(Macroscopic):
+    def density(self, model):
         """
         Calculates density from distribution functions.
 
-        Modifies `r` in place. Does not change `f`.
+        Modifies `model.r` in place.
 
         Parameters
         ----------
-        r : np.ndarray
-            Two dimensional numpy array of rho[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
+        model : Model
+            A Model object.
         """
-        r[:] = _m0(f)
+        model.r[:] = _m0(model.fi)
 
-    def velocity_x(self, u, r, f, s):
+    def velocity_x(self, model):
         """
         Calculates velocity x-component from distribution functions.
 
-        Modifies `u` in place. Does not change `r`, `f` or `s`.
+        Modifies `model.u` in place.
 
         Parameters
         ----------
-        u : np.ndarray
-            Two dimensional numpy array of u[y, x].
-        r : np.ndarray
-            Two dimensional numpy array of r[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        u[:] = _mx(f, s) / r
+        model.u[:] = _mx(model.fi, model.stencil) / model.r
 
-    def velocity_y(self, v, r, f, s):
+    def velocity_y(self, model):
         """
         Calculates velocity y-component from distribution functions.
 
-        Modifies `v` in place. Does not change `f` or `s`.
+        Modifies `model.v` in place.
 
         Parameters
         ----------
-        u : np.ndarray
-            Two dimensional numpy array of u[y, x].
-        r : np.ndarray
-            Two dimensional numpy array of r[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        v[:] = _my(f, s) / r
+        model.v[:] = _my(model.fi, model.stencil) / model.r
 
-    def forcing(self, f, Fx, Fy, s):
+    def forcing(self, model):
         """
         Adds forcing terms F_q to distributions f.
 
             f[q, y, x] += F_q
 
-        Modifies `f` in place. DOes not change `Fx`, `Fy` or `s`.
+        Modifies `model.fo` in place. Does not change `Fx`, `Fy` or `s`.
 
         Parameters
         ----------
-        f : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        Fx : float or np.ndarray
-            Float, or two-dimensional numpy array of shape (ny, nx).
-            Contains x-component of the applied body force.
-        Fy : float or np.ndarray
-            Float, or two-dimensional numpy array of shape (ny, nx).
-            Contains y-component of the applied body force.
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        f[:] += (
+        model.fo[:] += (
             3.0
-            * s.w[:, None, None]
-            * (s.cx[:, None, None] * Fx + s.cy[:, None, None] * Fy)
+            * model.stencil.w[:, None, None]
+            * (
+                model.stencil.cx[:, None, None] * model.Fx
+                + model.stencil.cy[:, None, None] * model.Fy
+            )
         )

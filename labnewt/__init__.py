@@ -9,7 +9,7 @@ from .boundary import (
 from .collider import ColliderSRT
 from .force import ConstantGravityForce, GravityForce
 from .gravity import Gravity
-from .macroscopic import Macroscopic
+from .macroscopic import MacroscopicStandard
 from .model import FreeSurfaceModel, Model
 from .simulate import Simulation
 from .stencil import StencilD2Q9
@@ -25,7 +25,7 @@ __all__ = [
     "Model",
     "FreeSurfaceModel",
     "Simulation",
-    "Macroscopic",
+    "MacroscopicStandard",
     "LeftWallNoSlip",
     "RightWallNoSlip",
     "BottomWallNoSlip",

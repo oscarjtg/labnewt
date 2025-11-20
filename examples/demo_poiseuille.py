@@ -53,7 +53,7 @@ if __name__ == "__main__":
     ny = 1
 
     model = Model(nx, ny, dx, dt, nu, quiet=False)
-    gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
+    gravity = ConstantGravityForce(dx, dt, abs(gy), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(LeftWallNoSlip())
     model.add_boundary_condition(RightWallNoSlip())
