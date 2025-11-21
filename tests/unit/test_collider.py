@@ -26,27 +26,29 @@ def test_collider_srt_unit_omega_stationary_fluid():
     ny = 10
     shape = (nx, ny)
 
-    fi = np.random.rand(s.nq, *shape)
-    fo = np.empty_like(fi)
-    r = np.ones(shape)
-    u = np.zeros(shape)
-    v = np.zeros(shape)
+    model = Model(nx, ny, dx, dt, nu)
 
-    fi0 = np.copy(fi)
-    r0 = np.copy(r)
-    u0 = np.copy(u)
-    v0 = np.copy(v)
+    model.fi = np.random.rand(s.nq, *shape)
+    model.fo = np.empty_like(model.fi)
+    model.r = np.ones(shape)
+    model.u = np.zeros(shape)
+    model.v = np.zeros(shape)
 
-    collider.collide(fo, fi, r, u, v, s)
+    fi0 = np.copy(model.fi)
+    r0 = np.copy(model.r)
+    u0 = np.copy(model.u)
+    v0 = np.copy(model.v)
+
+    collider.collide(model)
 
     # Check no unintended side effects.
-    assert np.allclose(fi, fi0, atol=1.0e-12)
-    assert np.allclose(r, r0, atol=1.0e-12)
-    assert np.allclose(u, u0, atol=1.0e-12)
-    assert np.allclose(v, v0, atol=1.0e-12)
+    assert np.allclose(model.fi, fi0, atol=1.0e-12)
+    assert np.allclose(model.r, r0, atol=1.0e-12)
+    assert np.allclose(model.u, u0, atol=1.0e-12)
+    assert np.allclose(model.v, v0, atol=1.0e-12)
 
     # Check physics.
-    assert np.allclose(fo, s.w[:, None, None], atol=1.0e-12)
+    assert np.allclose(model.fo, s.w[:, None, None], atol=1.0e-12)
 
 
 def test_collider_srt_conserves_moments():
@@ -67,7 +69,7 @@ def test_collider_srt_conserves_moments():
 
     r0, u0, v0 = np.copy(model.r), np.copy(model.u), np.copy(model.v)
 
-    collider.collide(model.fo, model.fi, model.r, model.u, model.v, model.stencil)
+    collider.collide(model)
 
     model.macros.density(model)
     model.macros.velocity_x(model)

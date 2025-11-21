@@ -1,18 +1,26 @@
 """Test script for checking that FreeSurfaceModel reaches steady state"""
 
 import numpy as np
+import pytest
 
 from labnewt import (
     BottomWallNoSlip,
     FreeSurfaceModel,
     GravityForce,
+    MacroscopicGuo,
+    MacroscopicStandard,
     Simulation,
     TopWallNoSlip,
 )
 from labnewt.diagnostics import average_difference
 
 
-def test_bathtub_periodic():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_bathtub_periodic(Macroscopic):
     nx = 2  # number of grid points in x direction
     ny = 20  # number of grid points in y direction
     nu = 0.1  # kinematic viscosity
@@ -21,7 +29,7 @@ def test_bathtub_periodic():
     tf = 100000.0  # end time
     g = 0.001  # gravitational acceleration
 
-    model = FreeSurfaceModel(nx, ny, dx, dt, nu)
+    model = FreeSurfaceModel(nx, ny, dx, dt, nu, macros=Macroscopic())
     gravity = GravityForce(dx, dt, g)
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
@@ -50,6 +58,9 @@ def test_bathtub_periodic():
     sim = Simulation(model, stop_time=tf)
     sim.run_to_steady_state(int(tf), rtol=1.0e-6)
 
+    model.print_integrals()
+    model.print_means()
+
     phi_err = average_difference(model.vof.phi, phi)
     u_err = average_difference(model.vof.phi * model.u, phi * u0)
     v_err = average_difference(model.vof.phi * model.v, phi * v0)
@@ -57,5 +68,5 @@ def test_bathtub_periodic():
 
     assert abs(phi_err) < 1.0e-03
     assert abs(u_err) < 1.0e-10
-    assert abs(v_err) < 3.0e-04
+    assert abs(v_err) < 7.0e-07
     assert abs(r_err) < 1.0e-10

@@ -9,13 +9,18 @@ from labnewt import (
     BottomWallNoSlip,
     FreeSurfaceModel,
     GravityForce,
+    MacroscopicGuo,
+    MacroscopicStandard,
     Simulation,
     TopWallNoSlip,
 )
 
 
-def run_periodic_bathtub_model(g, nx, ny, nu, dx, dt, tf, j_surf):
-    model = FreeSurfaceModel(nx, ny, dx, dt, nu)
+def run_periodic_bathtub_model(g, nx, ny, nu, dx, dt, tf, j_surf, macros):
+    """
+    Runs FreeSurfaceModel until steady state.
+    """
+    model = FreeSurfaceModel(nx, ny, dx, dt, nu, macros=macros)
     gravity = GravityForce(dx, dt, g)
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
@@ -72,7 +77,7 @@ def hydrostatic_density(phi, g):
     """
     ny, nx = phi.shape
     rho0 = 1.0
-    rho = np.full(model.shape, rho0)
+    rho = np.full(phi.shape, rho0)
     for j in np.arange(ny - 2, -1, -1):
         rho[j, :] = rho[j + 1, :] + 3.0 * rho[j + 1, :] * g * phi[j + 1, :] * dx
     return rho
@@ -117,35 +122,65 @@ def plot_denisty_and_velocity_profiles(model, rho_hydrostatic):
     ax[1].legend(fontsize=14)
 
 
-def run_gravity_sweep(gs, params, savedir):
+def run_gravity_sweep(macroscopic, label, gs, params, datadir):
+    """For each gravity in `gs`, run model, compute error in v. Save to disk."""
     v_errs = np.zeros_like(gs)
     for i, g in enumerate(gs):
-        model = run_periodic_bathtub_model(g, *params)
+        model = run_periodic_bathtub_model(g, *params, macroscopic)
         v_err = np.max(np.abs(model.v))
         print(f"g = {g}, v_err = {v_err}, ratio = {v_err/g}")
         v_errs[i] = v_err
-    os.makedirs(savedir, exist_ok=True)
-    np.save(savedir + "gs.npy", gs)
-    np.save(savedir + "v_errs.npy", v_errs)
+    os.makedirs(datadir, exist_ok=True)
+    np.save(datadir + label + "_gs.npy", gs)
+    np.save(datadir + label + "_v_errs.npy", v_errs)
 
 
-def plot_gravity_sweep(savedir):
-    gs = np.load(savedir + "gs.npy")
-    v_errs = np.load(savedir + "v_errs.npy")
+def plot_gravity_sweep(label, datadir, plotdir):
+    """Plot data saved by `run_gravity_sweep()`"""
+    gs = np.load(datadir + label + "_gs.npy")
+    v_errs = np.load(datadir + label + "_v_errs.npy")
 
-    print(gs)
-    print(v_errs)
-    print(v_errs / gs)
-
-    plt.plot(gs, v_errs / gs, "ko")
+    plt.plot(gs, v_errs, "ko")
     plt.xlabel(r"$g$", fontsize=16)
-    plt.ylabel(r"$v / g$", fontsize=16)
+    plt.ylabel(r"$v$", fontsize=16)
+    plt.title(label, fontsize=16)
     plt.xscale("log")
     plt.grid(True)
-    plt.ylim((0.4, 0.6))
     plt.tick_params(labelsize=14)
     plt.tight_layout()
-    plt.savefig("./examples/plots/bathtub_velocity_vs_gravity.png", dpi=150)
+    plt.savefig(plotdir + "velocity_vs_gravity_" + label + ".png", dpi=150)
+    plt.close()
+
+
+def run_single(macroscopic, label, g, params, plotdir):
+    """
+    Runs model in periodic bathtub configuration and produces plots.
+
+    Parameters
+    ----------
+    macroscopic : Macroscopic
+        A Macroscopic object, which contains methods for computing
+        macroscopic fluid properties (density, velocity, etc.)
+        from particle distribution functions.
+    label : string
+        String giving name of Macroscopic object for plot file name.
+    g : float
+        Gravitational acceleration.
+    params : tuple
+        Tuple containing the other necessary model parameters.
+    plotdir : string
+        String giving directory to which plots are to be saved.
+    """
+    model = run_periodic_bathtub_model(g, *params, macroscopic)
+    model.plot_fields()
+    plt.savefig(plotdir + f"fields_with_" + label + ".png")
+    plt.close()
+
+    rho_hydrostatic = hydrostatic_density(model.vof.phi, g)
+    plot_denisty_and_velocity_profiles(model, rho_hydrostatic)
+    plt.suptitle(label, fontsize=16)
+    plt.savefig(plotdir + "profiles_with_" + label + ".png")
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -158,21 +193,25 @@ if __name__ == "__main__":
     g = 0.001  # gravitational acceleration
     j_surf = ny // 2  # j index of free surface
     params = (nx, ny, nu, dx, dt, tf, j_surf)
-    savedir = "./examples/data/bathtub/"
+    datadir = "./examples/data/bathtub/"
+    plotdir = "./examples/plots/bathtub/"
+    os.makedirs(datadir, exist_ok=True)
+    os.makedirs(plotdir, exist_ok=True)
 
-    SINGLE = False
+    SINGLE = True
     SWEEP = True
-    SWEEP_PLOT_ONLY = True
+    SWEEP_PLOT_ONLY = False
 
     if SINGLE:
-        model = run_periodic_bathtub_model(g, *params)
-        rho_hydrostatic = hydrostatic_density(model.vof.phi, g)
-        plot_denisty_and_velocity_profiles(model, rho_hydrostatic)
-        plt.show()
+        run_single(MacroscopicStandard(), "MacroscopicStandard", g, params, plotdir)
+        run_single(MacroscopicGuo(), "MacroscopicGuo", g, params, plotdir)
 
     if SWEEP:
         gs = np.logspace(-5, -3, 10)
         if not SWEEP_PLOT_ONLY:
-            run_gravity_sweep(gs, params, savedir)
-        plot_gravity_sweep(savedir)
-        plt.show()
+            run_gravity_sweep(
+                MacroscopicStandard(), "MacroscopicStandard", gs, params, datadir
+            )
+            run_gravity_sweep(MacroscopicGuo(), "MacroscopicGuo", gs, params, datadir)
+        plot_gravity_sweep("MacroscopicStandard", datadir, plotdir)
+        plot_gravity_sweep("MacroscopicGuo", datadir, plotdir)

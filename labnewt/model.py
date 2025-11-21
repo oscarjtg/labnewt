@@ -49,6 +49,8 @@ class Model:
         self.fo = np.zeros_like(self.fi)
         self.Fx = np.zeros(self.shape)
         self.Fy = np.zeros(self.shape)
+        self.uc = np.zeros(self.shape)
+        self.vc = np.zeros(self.shape)
 
         self.boundary_conditions = []
         self.forcings = []
@@ -115,7 +117,9 @@ class Model:
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
-        self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
+        self.macros.velocity_x_coll(self)
+        self.macros.velocity_y_coll(self)
+        self.collider.collide(self)
 
         # Compute force arrays.
         self.Fx.fill(0.0)
@@ -346,9 +350,9 @@ class FreeSurfaceModel(Model):
             fi_old[:] = self.fi
 
             # Collision step
-            self.collider.collide(
-                self.fo, self.fi, self.r, self.u, self.v, self.stencil
-            )
+            self.macros.velocity_x_coll(self)
+            self.macros.velocity_y_coll(self)
+            self.collider.collide(self)
 
             # Compute force arrays.
             self.Fx.fill(0.0)
@@ -388,7 +392,9 @@ class FreeSurfaceModel(Model):
     def _step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
-        self.collider.collide(self.fo, self.fi, self.r, self.u, self.v, self.stencil)
+        self.macros.velocity_x_coll(self)
+        self.macros.velocity_y_coll(self)
+        self.collider.collide(self)
 
         # Compute force arrays.
         self.Fx.fill(0.0)

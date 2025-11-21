@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from labnewt import Model, StencilD2Q9
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model, StencilD2Q9
 from labnewt._equilibrium import _feq2, _feq2_q
 
 
@@ -17,10 +18,15 @@ def test_feq2_array_zero_velocity():
     assert np.allclose(feq_computed, feq_expected)
 
 
-def test_feq2_macroscopic_properties():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_feq2_macroscopic_properties(Macroscopic):
     nx, ny = 5, 4
     shape = (ny, nx)
-    model = Model(nx, ny, 1, 1, 1)
+    model = Model(nx, ny, 1, 1, 1, macros=Macroscopic())
 
     rng = np.random.default_rng(42)
     r0 = rng.beta(1.0, 1.0, shape)

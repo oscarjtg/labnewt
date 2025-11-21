@@ -1,11 +1,34 @@
 import numpy as np
+import pytest
 
-from labnewt import Model, StencilD2Q9
-from labnewt.macroscopic import MacroscopicStandard
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model, StencilD2Q9
+from labnewt.macroscopic import Macroscopic
 
 
-def test_density_d2q9_against_known_values():
-    macros = MacroscopicStandard()
+def test_macroscopic_methods_raise_notimplemented():
+    macros = Macroscopic()
+
+    class DummyModel:
+        pass
+
+    model = DummyModel()
+    with pytest.raises(NotImplementedError):
+        macros.density(model)
+    with pytest.raises(NotImplementedError):
+        macros.velocity_x(model)
+    with pytest.raises(NotImplementedError):
+        macros.velocity_y(model)
+    with pytest.raises(NotImplementedError):
+        macros.forcing(model)
+
+
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_density_d2q9_against_known_values(Macroscopic):
+    macros = Macroscopic()
     nq = 9
     shape = (2, 2)
     f = np.empty((nq, *shape))
@@ -35,8 +58,13 @@ def test_density_d2q9_against_known_values():
     assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_velocity_x_d2q9_against_known_values():
-    macros = MacroscopicStandard()
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_velocity_x_d2q9_against_known_values(Macroscopic):
+    macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
     f = np.empty((s.nq, *shape))
@@ -67,8 +95,13 @@ def test_velocity_x_d2q9_against_known_values():
     assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_velocity_y_d2q9_against_known_values():
-    macros = MacroscopicStandard()
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_velocity_y_d2q9_against_known_values(Macroscopic):
+    macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
     f = np.empty((s.nq, *shape))
@@ -99,8 +132,13 @@ def test_velocity_y_d2q9_against_known_values():
     assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_force_distribution_array_with_zeros():
-    macros = MacroscopicStandard()
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_force_distribution_array_with_zeros(Macroscopic):
+    macros = Macroscopic()
     s = StencilD2Q9()
     shape = (5, 5)
     params = (*shape, 1, 1, 1)
@@ -122,8 +160,13 @@ def test_force_distribution_array_with_zeros():
     assert np.allclose(model.Fy, np.zeros(shape), atol=1.0e-12)
 
 
-def test_force_distribution_constant_with_zeros():
-    macros = MacroscopicStandard()
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_force_distribution_constant_with_zeros(Macroscopic):
+    macros = Macroscopic()
     s = StencilD2Q9()
     shape = (5, 5)
     params = (*shape, 1, 1, 1)
@@ -134,7 +177,7 @@ def test_force_distribution_constant_with_zeros():
     f0 = np.copy(model.fo)
     model.Fx = 0.0
     model.Fy = 0.0
-    # NB this should never be the case, as model.Fx and model.Fy
+    # NB the above should never be the case, as model.Fx and model.Fy
     # are supposed to be two-dimensional numpy arrays.
 
     macros.forcing(model)
