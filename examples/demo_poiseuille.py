@@ -8,8 +8,6 @@ import numpy as np
 from labnewt import (
     ConstantGravityForce,
     LeftWallNoSlip,
-    MacroscopicGuo,
-    MacroscopicStandard,
     Model,
     RightWallNoSlip,
     Simulation,
@@ -54,7 +52,7 @@ if __name__ == "__main__":
     nx = int(L / dx)
     ny = 1
 
-    model = Model(nx, ny, dx, dt, nu, macros=MacroscopicStandard(), quiet=False)
+    model = Model(nx, ny, dx, dt, nu, quiet=False)
     gravity = ConstantGravityForce(dx, dt, abs(gy), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(LeftWallNoSlip())

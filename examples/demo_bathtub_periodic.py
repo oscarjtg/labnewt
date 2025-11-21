@@ -173,7 +173,7 @@ def run_single(macroscopic, label, g, params, plotdir):
     """
     model = run_periodic_bathtub_model(g, *params, macroscopic)
     model.plot_fields()
-    plt.savefig(plotdir + f"fields_with_" + label + ".png")
+    plt.savefig(plotdir + "fields_with_" + label + ".png")
     plt.close()
 
     rho_hydrostatic = hydrostatic_density(model.vof.phi, g)
