@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from labnewt import Model, Simulation
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model, Simulation
 from labnewt.diagnostics import relative_error
 
 
@@ -185,7 +186,12 @@ def tgv_r(x, y, t, kx, ky, td, u0, p0, rho0):
     return convert_pressure_to_density(p, p0, rho0)
 
 
-def test_simulation_with_taylor_green_vortex_flow():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_simulation_with_taylor_green_vortex_flow(Macroscopic):
     nx = 72  # number of grid points in x direction
     ny = 96  # number of grid points in y direction
     u0 = 0.03  # vortex amplitude
@@ -200,7 +206,7 @@ def test_simulation_with_taylor_green_vortex_flow():
     ti = 0.0  # initial time
     tf = 1000.0  # end time
 
-    model = Model(nx, ny, dx, dt, nu)
+    model = Model(nx, ny, dx, dt, nu, macros=Macroscopic())
     model.set_r(tgv_r, ti, kx, ky, td, u0, p0, rho0)
     model.set_u(tgv_ux, ti, kx, ky, td, u0)
     model.set_v(tgv_uy, ti, kx, ky, td, u0)

@@ -5,7 +5,7 @@ from labnewt import (
     ConstantGravityForce,
     FreeSurfaceModel,
     GravityForce,
-    Macroscopic,
+    MacroscopicStandard,
     Model,
     StencilD2Q9,
 )
@@ -72,11 +72,12 @@ def test_constant_gravity_force_conserves_moments():
     dt = 0.1
     nu = 0.1
     force = ConstantGravityForce(dx, dt)
-    macros = Macroscopic()
+    macros = MacroscopicStandard()
     s = StencilD2Q9()
     model = Model(nx, ny, dx, dt, nu, stencil=s, macros=macros)
 
-    f = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    f = rng.random((s.nq, *shape))
     r_pre = _m0(f)
     u_pre = _mx(f, s) / r_pre
     v_pre = _my(f, s) / r_pre
@@ -87,10 +88,12 @@ def test_constant_gravity_force_conserves_moments():
     model._set_f(f)
 
     force.apply(model)
+    model.macros.forcing(model)
+
     f[:] = model.fo
     r_post = _m0(f)
-    u_post = (_mx(f, s) - force.Fx) / r_post
-    v_post = (_my(f, s) - force.Fy) / r_post
+    u_post = (_mx(f, s) - model.Fx) / r_post
+    v_post = (_my(f, s) - model.Fy) / r_post
 
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)
@@ -105,11 +108,12 @@ def test_gravity_force_conserves_moments():
     dt = 0.1
     nu = 0.1
     force = GravityForce(dx, dt)
-    macros = Macroscopic()
+    macros = MacroscopicStandard()
     s = StencilD2Q9()
     model = Model(nx, ny, dx, dt, nu, stencil=s, macros=macros)
 
-    f = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    f = rng.random((s.nq, *shape))
     r_pre = _m0(f)
     u_pre = _mx(f, s) / r_pre
     v_pre = _my(f, s) / r_pre
@@ -120,10 +124,12 @@ def test_gravity_force_conserves_moments():
     model._set_f(f)
 
     force.apply(model)
+    model.macros.forcing(model)
+
     f[:] = model.fo
     r_post = _m0(f)
-    u_post = (_mx(f, s) - force.Fx) / r_post
-    v_post = (_my(f, s) - force.Fy) / r_post
+    u_post = (_mx(f, s) - model.Fx) / r_post
+    v_post = (_my(f, s) - model.Fy) / r_post
 
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)
@@ -138,11 +144,12 @@ def test_gravity_force_free_surface_model_conserves_moments():
     dt = 0.1
     nu = 0.1
     force = GravityForce(dx, dt)
-    macros = Macroscopic()
+    macros = MacroscopicStandard()
     s = StencilD2Q9()
     model = FreeSurfaceModel(nx, ny, dx, dt, nu, stencil=s, macros=macros)
 
-    f = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    f = rng.random((s.nq, *shape))
     r_pre = _m0(f)
     u_pre = _mx(f, s) / r_pre
     v_pre = _my(f, s) / r_pre
@@ -155,10 +162,12 @@ def test_gravity_force_free_surface_model_conserves_moments():
     model._set_f(f)
 
     force.apply(model)
+    model.macros.forcing(model)
+
     f[:] = model.fo
     r_post = _m0(f)
-    u_post = (_mx(f, s) - force.Fx) / r_post
-    v_post = (_my(f, s) - force.Fy) / r_post
+    u_post = (_mx(f, s) - model.Fx) / r_post
+    v_post = (_my(f, s) - model.Fy) / r_post
 
     assert np.allclose(r_pre, r_post, atol=1.0e-12)
     assert np.allclose(u_pre, u_post, atol=1.0e-12)

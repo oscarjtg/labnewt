@@ -5,7 +5,7 @@ from .gravity import Gravity
 
 class Force:
     def apply(self, model):
-        """Apply the force to the model. Subclasses override."""
+        """Calculate force components from model arrays."""
         raise NotImplementedError
 
 
@@ -51,10 +51,9 @@ class ConstantGravityForce(Force):
 
     def apply(self, model):
         """
-        Applies constant, uniform force to `model.fo`.
+        Adds constant, uniform force to `model`.
 
-        Modifies `model.fo` array in-place.
-        All other `model` attributes remain unchanged.
+        Modifies `model.Fx` and `model.Fy` arrays in-place.
 
         Parameters
         ----------
@@ -65,18 +64,16 @@ class ConstantGravityForce(Force):
         -------
         None
         """
-        model.macros.force_distribution_constant(
-            model.fo, self.Fx, self.Fy, model.stencil
-        )
+        model.Fx += self.Fx
+        model.Fy += self.Fy
 
 
 class GravityForce(ConstantGravityForce):
     def apply(self, model):
         """
-        Applies gravitational force weighted by density and fill fraction.
+        Adds gravitational force weighted by density and fill fraction.
 
-        Modifies `model.fo` array in-place.
-        All other `model` attributes remain unchanged.
+        Modifies `model.Fx` and `model.Fy` arrays in-place.
 
         Parameters
         ----------
@@ -92,6 +89,5 @@ class GravityForce(ConstantGravityForce):
         if hasattr(model, "vof"):
             self.Fx *= model.vof.phi
             self.Fy *= model.vof.phi
-        model.macros.force_distribution_constant(
-            model.fo, self.Fx, self.Fy, model.stencil
-        )
+        model.Fx += self.Fx
+        model.Fy += self.Fy

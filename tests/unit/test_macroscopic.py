@@ -1,10 +1,33 @@
 import numpy as np
+import pytest
 
-from labnewt import StencilD2Q9
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model, StencilD2Q9
 from labnewt.macroscopic import Macroscopic
 
 
-def test_density_d2q9_against_known_values():
+def test_macroscopic_methods_raise_notimplemented():
+    macros = Macroscopic()
+
+    class DummyModel:
+        pass
+
+    model = DummyModel()
+    with pytest.raises(NotImplementedError):
+        macros.density(model)
+    with pytest.raises(NotImplementedError):
+        macros.velocity_x(model)
+    with pytest.raises(NotImplementedError):
+        macros.velocity_y(model)
+    with pytest.raises(NotImplementedError):
+        macros.forcing(model)
+
+
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_density_d2q9_against_known_values(Macroscopic):
     macros = Macroscopic()
     nq = 9
     shape = (2, 2)
@@ -15,23 +38,32 @@ def test_density_d2q9_against_known_values():
         f[q, 1, 0] = 0.1 if q % 2 == 0 else -0.1
         f[q, 1, 1] = 0.1 * (q + 1) if q % 2 == 0 else -0.1 * (q + 1)
 
+    f0 = np.copy(f)
+
     r_exp = np.empty(shape)
     r_exp[0, 0] = 0.9  # 9 * 0.1
     r_exp[0, 1] = 4.5  # 0.5 * 9 * 10 / 10
     r_exp[1, 0] = 0.1
     r_exp[1, 1] = 0.5
 
-    r_com = np.empty(shape)
-    f0 = np.copy(f)
-    macros.density(r_com, f)
+    params = (*shape, 1, 1, 1)
+    model = Model(*params)
+    model.fi = f
 
-    # Check r_com was computed correctly.
-    assert np.allclose(r_exp, r_com, atol=1.0e-12)
-    # Check that f was not changed.
-    assert np.allclose(f0, f, atol=1.0e-12)
+    macros.density(model)
+
+    # Check model.r was computed correctly.
+    assert np.allclose(model.r, r_exp, atol=1.0e-12)
+    # Check that model.fi was not changed.
+    assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_velocity_x_d2q9_against_known_values():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_velocity_x_d2q9_against_known_values(Macroscopic):
     macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
@@ -42,24 +74,33 @@ def test_velocity_x_d2q9_against_known_values():
         f[q, 1, 0] = 0.1 if s.ex[q] > 0 else 0.0
         f[q, 1, 1] = 0.1 if s.ex[q] > 0 else -0.1
 
+    f0 = np.copy(f)
+
     u_exp = np.empty(shape)
     u_exp[0, 0] = 0.0  # all f = 0
     u_exp[0, 1] = 0.0  # f same in all directions, so no net speed
     u_exp[1, 0] = 0.3  # only three vectors in positive x direction
     u_exp[1, 1] = 0.6  # three +ve vals in +ve x, three -ve vals in -ve x
 
-    u_com = np.empty(shape)
-    r = np.ones(shape)
-    f0 = np.copy(f)
-    macros.velocity_x(u_com, r, f, s)
+    params = (*shape, 1, 1, 1)
+    model = Model(*params)
+    model.fi = f
+    model.r = np.ones(shape)
 
-    # Check u_com was computed currectly.
-    assert np.allclose(u_exp, u_com, atol=1.0e-12)
-    # Check that f was not changed.
-    assert np.allclose(f, f0, atol=1.0e-12)
+    macros.velocity_x(model)
+
+    # Check model.u was computed currectly.
+    assert np.allclose(model.u, u_exp, atol=1.0e-12)
+    # Check that model.fi was not changed.
+    assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_velocity_y_d2q9_against_known_values():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_velocity_y_d2q9_against_known_values(Macroscopic):
     macros = Macroscopic()
     s = StencilD2Q9
     shape = (2, 2)
@@ -70,50 +111,76 @@ def test_velocity_y_d2q9_against_known_values():
         f[q, 1, 0] = 0.1 if s.ey[q] > 0 else 0.0
         f[q, 1, 1] = 0.1 if s.ey[q] > 0 else -0.1
 
+    f0 = np.copy(f)
+
     v_exp = np.empty(shape)
     v_exp[0, 0] = 0.0  # all f = 0
     v_exp[0, 1] = 0.0  # f same in all directions, so no net speed
     v_exp[1, 0] = 0.3  # only three vectors in positive x direction
     v_exp[1, 1] = 0.6  # three +ve vals in +ve x, three -ve vals in -ve x
 
-    v_com = np.empty(shape)
-    r = np.ones(shape)
-    f0 = np.copy(f)
-    macros.velocity_y(v_com, r, f, s)
+    params = (*shape, 1, 1, 1)
+    model = Model(*params)
+    model.fi = f
+    model.r = np.ones(shape)
 
-    # Check that v_com was computed correctly.
-    assert np.allclose(v_exp, v_com, atol=1.0e-12)
-    # Check that f was not changed.
-    assert np.allclose(f, f0, atol=1.0e-12)
+    macros.velocity_y(model)
+
+    # Check that model.v was computed correctly.
+    assert np.allclose(model.v, v_exp, atol=1.0e-12)
+    # Check that model.fi was not changed.
+    assert np.allclose(model.fi, f0, atol=1.0e-12)
 
 
-def test_force_distribution_array_with_zeros():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_force_distribution_array_with_zeros(Macroscopic):
     macros = Macroscopic()
     s = StencilD2Q9()
     shape = (5, 5)
-    f = np.random.rand(s.nq, *shape)
-    f0 = np.copy(f)
-    Fx = np.zeros(shape)
-    Fy = np.zeros(shape)
-    macros.force_distribution_array(f, Fx, Fy, s)
+    params = (*shape, 1, 1, 1)
+    model = Model(*params)
+
+    rng = np.random.default_rng(42)
+    model.fo = rng.random((s.nq, *shape))
+    f0 = np.copy(model.fo)
+    model.Fx = np.zeros(shape)
+    model.Fy = np.zeros(shape)
+
+    macros.forcing(model)
 
     # With zero force, expect no change to f
-    assert np.allclose(f, f0, atol=1.0e-12)
+    assert np.allclose(model.fo, f0, atol=1.0e-12)
 
     # Check for unintended side effects
-    assert np.allclose(Fx, np.zeros(shape), atol=1.0e-12)
-    assert np.allclose(Fy, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(model.Fx, np.zeros(shape), atol=1.0e-12)
+    assert np.allclose(model.Fy, np.zeros(shape), atol=1.0e-12)
 
 
-def test_force_distribution_constant_with_zeros():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_force_distribution_constant_with_zeros(Macroscopic):
     macros = Macroscopic()
     s = StencilD2Q9()
     shape = (5, 5)
-    f = np.random.rand(s.nq, *shape)
-    f0 = np.copy(f)
-    Fx = 0.0
-    Fy = 0.0
-    macros.force_distribution_constant(f, Fx, Fy, s)
+    params = (*shape, 1, 1, 1)
+    model = Model(*params)
+
+    rng = np.random.default_rng(42)
+    model.fo = rng.random((s.nq, *shape))
+    f0 = np.copy(model.fo)
+    model.Fx = 0.0
+    model.Fy = 0.0
+    # NB the above should never be the case, as model.Fx and model.Fy
+    # are supposed to be two-dimensional numpy arrays.
+
+    macros.forcing(model)
 
     # With zero force, expect no change to f
-    assert np.allclose(f, f0, atol=1.0e-12)
+    assert np.allclose(model.fo, f0, atol=1.0e-12)

@@ -1,113 +1,201 @@
+import numpy as np
+
 from ._moments import _m0, _mx, _my
 
 
 class Macroscopic:
-    def density(self, r, f):
+    def density(self, model):
+        raise NotImplementedError
+
+    def velocity_x(self, model):
+        raise NotImplementedError
+
+    def velocity_y(self, model):
+        raise NotImplementedError
+
+    def forcing(self, model):
+        raise NotImplementedError
+
+
+class MacroscopicStandard(Macroscopic):
+    def density(self, model):
         """
         Calculates density from distribution functions.
 
-        Modifies r in place. Does not change f.
+        Modifies `model.r` in place.
 
         Parameters
         ----------
-        r : np.ndarray
-            Two dimensional numpy array of rho[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
+        model : Model
+            A Model object.
         """
-        r[:] = _m0(f)
+        model.r[:] = _m0(model.fi)
 
-    def velocity_x(self, u, r, f, s):
+    def velocity_x(self, model):
         """
-        Calculates velocity x-component from distribution functions.
+        Calculates fluid velocity x-component from distribution functions.
 
-        Modifies u in place. Does not change r, f or s.
+        Modifies `model.u` in place.
 
         Parameters
         ----------
-        u : np.ndarray
-            Two dimensional numpy array of u[y, x].
-        r : np.ndarray
-            Two dimensional numpy array of r[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        u[:] = _mx(f, s) / r
+        model.u[:] = (_mx(model.fi, model.stencil) + 0.5 * model.Fx) / model.r
 
-    def velocity_y(self, v, r, f, s):
+    def velocity_y(self, model):
         """
-        Calculates velocity y-component from distribution functions.
+        Calculates fluid velocity y-component from distribution functions.
 
-        Modifies v in place. Does not change f or s.
+        Modifies `model.v` in place.
 
         Parameters
         ----------
-        u : np.ndarray
-            Two dimensional numpy array of u[y, x].
-        r : np.ndarray
-            Two dimensional numpy array of r[y, x].
-        f : np.ndarray
-            Three dimensional numpy array of f[q, y, x].
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        v[:] = _my(f, s) / r
+        model.v[:] = (_my(model.fi, model.stencil) + 0.5 * model.Fy) / model.r
 
-    def force_distribution_array(self, f, Fx, Fy, s):
+    def velocity_x_coll(self, model):
         """
-        Adds forcing terms F_q to distributions f.
+        Calculates collision step velocity x-component from distribution functions.
 
-            f[q, y, x] += F_q[y, x]
-
-        Modifies `f` in place. `Fx` and `Fy` are read-only and remain unchanged.
+        Modifies `model.u` in place.
 
         Parameters
         ----------
-        f : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        Fx : np.ndarray
-            Two-dimensional numpy array of shape (ny, nx).
-            Not modified.
-        Fy : np.ndarray
-            Two-dimensional numpy array of shape (ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        f[:] += (
-            3.0
-            * s.w[:, None, None]
-            * (
-                s.cx[:, None, None] * Fx[None, :, :]
-                + s.cy[:, None, None] * Fy[None, :, :]
-            )
-        )
+        model.uc[:] = _mx(model.fi, model.stencil) / model.r
 
-    def force_distribution_constant(self, f, Fx, Fy, s):
+    def velocity_y_coll(self, model):
+        """
+        Calculates collision step velocity y-component from distribution functions.
+
+        Modifies `model.v` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.vc[:] = _my(model.fi, model.stencil) / model.r
+
+    def forcing(self, model):
         """
         Adds forcing terms F_q to distributions f.
 
             f[q, y, x] += F_q
 
-        Modifies `f` in place.
+        Modifies `model.fo` in place. Does not change `Fx`, `Fy` or `s`.
 
         Parameters
         ----------
-        f : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        Fx : float
-            X-component of force.
-        Fy : float
-            Y-component of force.
-        s : Stencil
-            Lattice stencil.
+        model : Model
+            A Model object.
         """
-        f[:] += (
+        model.fo[:] += (
             3.0
-            * s.w[:, None, None]
-            * (s.cx[:, None, None] * Fx + s.cy[:, None, None] * Fy)
+            * model.stencil.w[:, np.newaxis, np.newaxis]
+            * (
+                model.stencil.cx[:, np.newaxis, np.newaxis] * model.Fx
+                + model.stencil.cy[:, np.newaxis, np.newaxis] * model.Fy
+            )
+        )
+
+
+class MacroscopicGuo(Macroscopic):
+    def density(self, model):
+        """
+        Calculates density from distribution functions.
+
+        Modifies `model.r` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.r[:] = _m0(model.fi)
+
+    def velocity_x(self, model):
+        """
+        Calculates fluid velocity x-component from distribution functions.
+
+        Modifies `model.u` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.u[:] = (_mx(model.fi, model.stencil) + 0.5 * model.Fx) / model.r
+
+    def velocity_y(self, model):
+        """
+        Calculates fluid velocity y-component from distribution functions.
+
+        Modifies `model.v` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.v[:] = (_my(model.fi, model.stencil) + 0.5 * model.Fy) / model.r
+
+    def velocity_x_coll(self, model):
+        """
+        Calculates collision step velocity x-component from distribution functions.
+
+        Modifies `model.uc` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.uc[:] = (_mx(model.fi, model.stencil) + 0.5 * model.Fx) / model.r
+
+    def velocity_y_coll(self, model):
+        """
+        Calculates collision step velocity y-component from distribution functions.
+
+        Modifies `model.vc` in place.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        model.vc[:] = (_my(model.fi, model.stencil) + 0.5 * model.Fy) / model.r
+
+    def forcing(self, model):
+        """
+        Adds forcing terms F_q to distributions f.
+
+            f[q, y, x] += F_q
+
+        Modifies `model.fo` in place. Does not change `Fx`, `Fy` or `s`.
+
+        Parameters
+        ----------
+        model : Model
+            A Model object.
+        """
+        cF = (
+            model.stencil.cx[:, np.newaxis, np.newaxis] * model.Fx
+            + model.stencil.cy[:, np.newaxis, np.newaxis] * model.Fy
+        )
+        cu = (
+            model.stencil.cx[:, np.newaxis, np.newaxis] * model.u
+            + model.stencil.cy[:, np.newaxis, np.newaxis] * model.v
+        )
+        uF = model.u * model.Fx + model.v * model.Fy
+        model.fo[:] += (
+            (1.0 - 0.5 * model.collider.omega)
+            * model.stencil.w[:, np.newaxis, np.newaxis]
+            * (3 * cF + 9 * cu * cF - 3 * uF)
         )

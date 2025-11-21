@@ -2,8 +2,9 @@ from unittest.mock import patch
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
-from labnewt import Model
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model
 
 
 def test_model_set_u_func():
@@ -70,7 +71,12 @@ def test_model_plot_savefig(tmp_path):
     plt.close("all")
 
 
-def test_model_quiescent():
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_model_quiescent(Macroscopic):
     """
     Checks that quiescent fluid remains quiescent after 100 timesteps.
     Also (implicitly) tests that arrays are created with the correct shape.
@@ -80,7 +86,7 @@ def test_model_quiescent():
     dx = 0.1
     dt = 0.1
     nu = 0.01
-    model = Model(nx, ny, dx, dt, nu)
+    model = Model(nx, ny, dx, dt, nu, macros=Macroscopic())
     shape = (ny, nx)
     model.set_r(np.ones(shape))
     model.set_u(np.zeros(shape))

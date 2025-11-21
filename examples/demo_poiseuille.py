@@ -47,27 +47,27 @@ if __name__ == "__main__":
     L = 1.0  # channel width
     dx = 0.05  # grid spacing
     dt = 0.005  # time step
-    tf = 10.0  # end time
+    tf = 20.0  # end time
 
     nx = int(L / dx)
     ny = 1
 
     model = Model(nx, ny, dx, dt, nu, quiet=False)
-    gravity = ConstantGravityForce(dx, dt, abs(gy), gx, gy)
+    gravity = ConstantGravityForce(dx, dt, abs(gy), (gx, gy))
     model.add_forcing(gravity)
     model.add_boundary_condition(LeftWallNoSlip())
     model.add_boundary_condition(RightWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
-    simulation.run()
+    simulation.run_to_steady_state(int(tf / dt), rtol=1.0e-08)
 
     U_analytic = velocity_profile(model.x, gy, L, nu)
     U_numeric = model.v[0, :] * dx / dt
 
     error = relative_error(U_numeric, U_analytic)
-    print(f"Relative error = {error*100:.2f}%")
+    print(f"Relative error = {error*100:.4f}%")
 
-    x_fine = np.linspace(0, 1)
+    x_fine = np.linspace(0, L)
     U_fine = velocity_profile(x_fine, gy, L, nu)
 
     plt.plot(x_fine, U_fine, color="black", label="analytic")

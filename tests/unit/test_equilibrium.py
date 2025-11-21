@@ -1,9 +1,8 @@
 import numpy as np
+import pytest
 
-from labnewt import Macroscopic, StencilD2Q9
+from labnewt import MacroscopicGuo, MacroscopicStandard, Model, StencilD2Q9
 from labnewt._equilibrium import _feq2, _feq2_q
-
-np.random.seed(42)
 
 
 def test_feq2_array_zero_velocity():
@@ -19,29 +18,38 @@ def test_feq2_array_zero_velocity():
     assert np.allclose(feq_computed, feq_expected)
 
 
-def test_feq2_macroscopic_properties():
-    shape = (4, 5)
-    r = np.random.beta(1.0, 1.0, shape)
-    u = np.random.normal(0.0, 0.1, shape)
-    v = np.random.normal(0.0, 0.2, shape)
-    s = StencilD2Q9()
-    feq = _feq2(r, u, v, s)
-    r1, u1, v1 = np.empty(shape), np.empty(shape), np.empty(shape)
-    macros = Macroscopic()
-    macros.density(r1, feq)
-    macros.velocity_x(u1, r1, feq, s)
-    macros.velocity_y(v1, r1, feq, s)
+@pytest.mark.parametrize(
+    "Macroscopic",
+    [MacroscopicStandard, MacroscopicGuo],
+    ids=["MacroscopicStandard", "MacroscopicGuo"],
+)
+def test_feq2_macroscopic_properties(Macroscopic):
+    nx, ny = 5, 4
+    shape = (ny, nx)
+    model = Model(nx, ny, 1, 1, 1, macros=Macroscopic())
 
-    assert np.allclose(r, r1, atol=1.0e-12)
-    assert np.allclose(u, u1, atol=1.0e-12)
-    assert np.allclose(v, v1, atol=1.0e-12)
+    rng = np.random.default_rng(42)
+    r0 = rng.beta(1.0, 1.0, shape)
+    u0 = rng.normal(0.0, 0.1, shape)
+    v0 = rng.normal(0.0, 0.2, shape)
+
+    model.fi = _feq2(r0, u0, v0, model.stencil)
+
+    model.macros.density(model)
+    model.macros.velocity_x(model)
+    model.macros.velocity_y(model)
+
+    assert np.allclose(model.r, r0, atol=1.0e-12)
+    assert np.allclose(model.u, u0, atol=1.0e-12)
+    assert np.allclose(model.v, v0, atol=1.0e-12)
 
 
 def test_feq2q_against_feq2():
     shape = (4, 5)
-    r = np.random.beta(1.0, 1.0, shape)
-    u = np.random.normal(0.0, 0.1, shape)
-    v = np.random.normal(0.0, 0.2, shape)
+    rng = np.random.default_rng(42)
+    r = rng.beta(1.0, 1.0, shape)
+    u = rng.normal(0.0, 0.1, shape)
+    v = rng.normal(0.0, 0.2, shape)
     s = StencilD2Q9()
     feq = _feq2(r, u, v, s)
 
