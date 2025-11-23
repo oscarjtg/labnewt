@@ -43,22 +43,10 @@ if __name__ == "__main__":
     model.print_means()
     model.plot_fields()
     plt.show()
-    # model.vof.plot_fields()
-    # plt.show()
 
     sim = Simulation(model, stop_time=tf)
     sim.run(save_frames=True)
 
     model.print_means()
-    # model.plot_fields()
-    # plt.show()
 
     pngs_to_mp4("./frames", "./examples/videos/demo_dambreak.mp4", fps=20)
-
-    # X, Y = np.meshgrid(model.x, model.y)
-    # fig, ax = plt.subplots(1, 2, sharex=True, sharey=True)
-    # ax[0].plot(model.x, eta(model.x, *eta_args))
-    # p1 = ax[1].pcolormesh(X, Y, model.vof.phi)
-    # cbar1 = plt.colorbar(p1, ax=ax[1])
-    # cbar1.set_label(r"$\phi$", fontsize=14)
-    # plt.show()

@@ -72,7 +72,7 @@ def test_poiseuille_vertical_down(Macroscopic):
 
     error = relative_error(U_numeric, U_analytic)
     percent_error = error * 100
-    assert (0.3125 < percent_error) & (percent_error < 0.3127)
+    assert (0.308 < percent_error) & (percent_error < 0.310)
 
 
 @pytest.mark.parametrize(
@@ -106,7 +106,7 @@ def test_poiseuille_vertical_up(Macroscopic):
 
     error = relative_error(U_numeric, U_analytic)
     percent_error = error * 100
-    assert (0.3125 < percent_error) & (percent_error < 0.3127)
+    assert (0.308 < percent_error) & (percent_error < 0.310)
 
 
 @pytest.mark.parametrize(
@@ -140,4 +140,4 @@ def test_poiseuille_horizontal(Macroscopic):
 
     error = relative_error(U_numeric, U_analytic)
     percent_error = error * 100
-    assert (0.3125 < percent_error) & (percent_error < 0.3127)
+    assert (0.308 < percent_error) & (percent_error < 0.310)

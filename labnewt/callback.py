@@ -6,3 +6,6 @@ class Callback:
         self.func = func
         self.interval = interval
         self.on_init = on_init
+
+    def __call__(self, model):
+        return self.func(model)
