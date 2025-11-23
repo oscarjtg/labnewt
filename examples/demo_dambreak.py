@@ -18,7 +18,7 @@ if __name__ == "__main__":
     nu = 0.1  # kinematic viscosity
     dx = 1  # grid spacing
     dt = 1  # time step
-    tf = 5000.0  # end time
+    tf = 50.0  # end time
     g = 0.0001  # gravitational acceleration
 
     eta_args = (ny / 2, ny / 10, nx / 2, 0.0)

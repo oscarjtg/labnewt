@@ -5,6 +5,7 @@ import time
 
 import numpy as np
 
+from labnewt.callback import Callback
 from labnewt.diagnostics import relative_error
 
 
@@ -14,17 +15,34 @@ class Simulation:
         self.stop_time = stop_time
         self.clock = 0.0
         self.timestep = 0
+        self.callbacks = []
 
-    def run(self, print_progress=True, save_frames=False):
+    def add_callback(self, func, interval=1, on_init=True):
+        cb = Callback(func, interval, on_init)
+        self.callbacks.append(cb)
+
+    def run(self, print_progress=True, save_frames=False, frame_interval=10):
         if save_frames:
+            # Add a callback to save frames every frame_interval timesteps.
             os.makedirs("./frames", exist_ok=True)
+
+            def saveframes(model):
+                filepath = f"./frames/frame_{int(model.clock / model.dt):04d}"
+                model.plot_fields(filepath)
+
+            self.add_callback(saveframes, interval=frame_interval, on_init=True)
+
         # Initialise model, and time it.
         start0 = time.perf_counter()
         if not self.model.initialised:
             self.model._initialise()
-        if save_frames:
-            self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
         end0 = time.perf_counter()
+
+        # Run callbacks
+        for cb in self.callbacks:
+            if cb.on_init:
+                cb.func(self.model)
+
         if print_progress:
             print(f"Model initialisation complete in {end0 - start0:.6f} seconds")
 
@@ -33,8 +51,12 @@ class Simulation:
         self.model._step()
         self.clock += self.model.dt
         self.timestep += 1
-        if save_frames:
-            self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
+
+        # Run callbacks
+        for cb in self.callbacks:
+            if self.timestep % cb.interval == 0:
+                cb.func(self.model)
+
         end1 = time.perf_counter()
         time_taken = end1 - start1
         if print_progress:
@@ -55,10 +77,12 @@ class Simulation:
             self.model._step()
             self.clock += self.model.dt
             self.timestep += 1
-            if save_frames and self.timestep % 10 == 0:
-                self.model.plot_fields(f"./frames/frame_{self.timestep:04d}")
-            if not print_progress:
-                continue
+
+            # Run callbacks
+            for cb in self.callbacks:
+                if self.timestep % cb.interval == 0:
+                    cb.func(self.model)
+
             if self.timestep % n_timesteps_10percent == 0:
                 end = time.perf_counter()
                 percent_complete = self.clock / self.stop_time * 100
