@@ -21,7 +21,7 @@ class StopWhenConverged(Callback):
         if self.f_prev is None:
             self.f_prev = np.copy(model.fi)
             return False
-        
+
         if np.allclose(model.fi, self.f_prev, rtol=self.rtol):
             self.converged = True
             self.sim.stop_time = self.sim.clock
@@ -109,7 +109,6 @@ class Simulation:
         total_time_taken = end2 - start0
         return bulk_time_taken, total_time_taken
 
-
     def run(self, print_progress=True, save_frames=False, frame_interval=10):
         if save_frames:
             # Add a callback to save frames every frame_interval timesteps.
@@ -119,7 +118,9 @@ class Simulation:
                 filepath = f"./frames/frame_{int(model.clock / model.dt):04d}"
                 model.plot_fields(filepath)
 
-            self.add_callback(saveframes, "saveframes", interval=frame_interval, on_init=True)
+            self.add_callback(
+                saveframes, "saveframes", interval=frame_interval, on_init=True
+            )
 
         bulk_time_taken, total_time_taken = self._run(print_progress)
 
