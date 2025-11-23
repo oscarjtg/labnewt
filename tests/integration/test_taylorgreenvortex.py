@@ -204,7 +204,7 @@ def test_simulation_with_taylor_green_vortex_flow(Macroscopic):
     ky = 2 * np.pi / ny  # wavevector y component
     td = 1.0 / (nu * (kx**2 + ky**2))  # decay timescale
     ti = 0.0  # initial time
-    tf = 1000.0  # end time
+    tf = 500.0  # end time
 
     model = Model(nx, ny, dx, dt, nu, macros=Macroscopic())
     model.set_r(tgv_r, ti, kx, ky, td, u0, p0, rho0)

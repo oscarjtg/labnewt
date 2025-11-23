@@ -59,7 +59,7 @@ if __name__ == "__main__":
     model.add_boundary_condition(RightWallNoSlip())
 
     simulation = Simulation(model, stop_time=tf)
-    simulation.run_to_steady_state(int(tf / dt), rtol=1.0e-08)
+    simulation.run_to_steady_state(int(tf / dt), rtol=1.0e-05)
 
     U_analytic = velocity_profile(model.x, gy, L, nu)
     U_numeric = model.v[0, :] * dx / dt

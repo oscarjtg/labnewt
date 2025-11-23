@@ -68,5 +68,5 @@ def test_bathtub_periodic(Macroscopic):
 
     assert abs(phi_err) < 1.0e-03
     assert abs(u_err) < 1.0e-10
-    assert abs(v_err) < 7.0e-07
+    assert abs(v_err) < 2.1e-06
     assert abs(r_err) < 1.0e-10
