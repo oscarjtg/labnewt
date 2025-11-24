@@ -8,6 +8,7 @@ from labnewt import (
     BottomWallNoSlip,
     ConstantGravityForce,
     FreeSurfaceModel,
+    NetCDFWriter,
     Simulation,
     TopWallNoSlip,
 )
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     nu = 0.1  # kinematic viscosity
     dx = 1  # grid spacing
     dt = 1  # time step
-    tf = 1000.0  # end time
+    tf = 2000.0  # end time
     g = 0.0001  # gravitational acceleration
 
     eta_args = (ny / 2, ny / 10, nx / 2, 0.0)
@@ -40,11 +41,14 @@ if __name__ == "__main__":
     plt.show()
 
     sim = Simulation(model, stop_time=tf)
-    sim.run(save_frames=True)
+    sim.callbacks["netcdfwriter"] = NetCDFWriter(
+        ["u", "v", "vof.phi", "fi"], "./examples/data/demo_freesurfacemodel.nc", 10
+    )
+    sim.run(save_frames=False)
 
     model.print_means()
 
-    pngs_to_mp4("./frames", "./examples/demo_freesurfacemodel.mp4", fps=5)
+    pngs_to_mp4("./frames", "./examples/videos/demo_freesurfacemodel.mp4", fps=5)
 
     model.plot_fields()
     plt.show()

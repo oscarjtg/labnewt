@@ -11,6 +11,7 @@ from .force import ConstantGravityForce, GravityForce
 from .gravity import Gravity
 from .macroscopic import MacroscopicGuo, MacroscopicStandard
 from .model import FreeSurfaceModel, Model
+from .netcdfwriter import NetCDFWriter
 from .simulate import Simulation
 from .stencil import StencilD2Q9
 from .streamer import Streamer
@@ -24,6 +25,7 @@ __all__ = [
     "ColliderSRT",
     "Model",
     "FreeSurfaceModel",
+    "NetCDFWriter",
     "Simulation",
     "MacroscopicStandard",
     "MacroscopicGuo",
