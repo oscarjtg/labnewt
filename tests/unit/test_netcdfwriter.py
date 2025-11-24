@@ -61,3 +61,4 @@ def test_file_closed_after_simulation(tmp_path):
     sim.callbacks["netcdfwriter"] = NetCDFWriter(fields, path, 5)
     sim.run(print_progress=False)
     assert not sim.callbacks["netcdfwriter"]._file_open
+    assert sim.callbacks["netcdfwriter"]._file is None
