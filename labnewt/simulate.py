@@ -107,6 +107,12 @@ class Simulation:
         end2 = time.perf_counter()
         bulk_time_taken = end2 - start2
         total_time_taken = end2 - start0
+
+        # Close any open files
+        for cb in self.callbacks.values():
+            if hasattr(cb, "close"):
+                cb.close()
+
         return bulk_time_taken, total_time_taken
 
     def run(self, print_progress=True, save_frames=False, frame_interval=10):
