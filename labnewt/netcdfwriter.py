@@ -43,10 +43,13 @@ class NetCDFWriter:
         """
         self.fields = fields
         self.path = path
-        self.interval = interval
+        self.interval = int(interval)
         self.on_init = on_init
         self.zlib = zlib
-        self.complevel = complevel
+        assert (
+            0 <= complevel & complevel <= 9
+        ), "Invalid complevel (should be between 0-9, inclusive)."
+        self.complevel = int(complevel)
         self.shuffle = shuffle
         self._file_open = False
         self._file = None
@@ -66,7 +69,8 @@ class NetCDFWriter:
 
     def _open_file(self):
         dir = os.path.dirname(self.path)
-        os.makedirs(dir, exist_ok=True)
+        if dir:
+            os.makedirs(dir, exist_ok=True)
         self._file = nc.Dataset(self.path, "w", format="NETCDF4")
         self._file_open = True
 
@@ -85,7 +89,7 @@ class NetCDFWriter:
 
     def _create_file_dimensions(self, model):
         self._file.createDimension("time", None)
-        self._file.createDimension("q", model.nq)
+        self._file.createDimension("q", model.stencil.nq)
         self._file.createDimension("y", model.ny)
         self._file.createDimension("x", model.nx)
 
@@ -130,7 +134,7 @@ class NetCDFWriter:
         self._file.source = "LaBNeWT: Lattice Boltzmann Numerical Wave Tank"
 
     def _add_xy_data_to_file(self, model):
-        self._file.variables["q"][:] = np.arange(model.nq)
+        self._file.variables["q"][:] = np.arange(model.stencil.nq)
         self._file.variables["y"][:] = model.y
         self._file.variables["x"][:] = model.x
 
