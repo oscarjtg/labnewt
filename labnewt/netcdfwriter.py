@@ -79,6 +79,7 @@ class NetCDFWriter:
             return
         self._file.close()
         self._file_open = False
+        self._file = None
 
     def _parse_field_label(self, label, model):
         parts = label.split(".")
