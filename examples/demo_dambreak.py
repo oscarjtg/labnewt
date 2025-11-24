@@ -1,13 +1,12 @@
 """Demo script for prototyping the FreeSurfaceModel."""
 
-import matplotlib.pyplot as plt
 import numpy as np
-from otgraph.video import pngs_to_mp4
 
 from labnewt import (
     BottomWallNoSlip,
     ConstantGravityForce,
     FreeSurfaceModel,
+    NetCDFWriter,
     Simulation,
     TopWallNoSlip,
 )
@@ -18,8 +17,8 @@ if __name__ == "__main__":
     nu = 0.1  # kinematic viscosity
     dx = 1  # grid spacing
     dt = 1  # time step
-    tf = 50.0  # end time
-    g = 0.0001  # gravitational acceleration
+    tf = 5000.0  # end time
+    g = 0.0002  # gravitational acceleration
 
     eta_args = (ny / 2, ny / 10, nx / 2, 0.0)
 
@@ -39,14 +38,15 @@ if __name__ == "__main__":
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
     model.add_boundary_condition(TopWallNoSlip())
-    model._initialise()
-    model.print_means()
-    model.plot_fields()
-    plt.show()
 
     sim = Simulation(model, stop_time=tf)
-    sim.run(save_frames=True)
+    save_fields = ["r", "u", "v", "vof.phi"]
+    save_path = "./examples/data/demo_dambreak.nc"
+    sim.callbacks["netcdfwriter"] = NetCDFWriter(save_fields, save_path, 25)
+    sim.add_callback(
+        lambda m: m.print_means(), "print_means", np.floor(tf / dt), on_init=True
+    )
+
+    sim.run()
 
     model.print_means()
-
-    pngs_to_mp4("./frames", "./examples/videos/demo_dambreak.mp4", fps=20)
