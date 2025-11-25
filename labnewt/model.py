@@ -135,7 +135,7 @@ class Model:
 
         # Apply boundary conditions.
         for bc in self.boundary_conditions:
-            bc.apply(self.fi, self.fo, self.stencil)
+            bc.apply(self)
 
         # Compute new macroscopic variables
         self.macros.density(self)
@@ -367,17 +367,9 @@ class FreeSurfaceModel(Model):
             self.streamer.stream(self.fi, self.fo, self.stencil)
 
             # Apply boundary conditions.
-            self.fsbc.apply(
-                self.fi,
-                self.fo,
-                self.stencil,
-                self.u,
-                self.v,
-                self.vof.I_mask,
-                self.vof.G_mask,
-            )
+            self.fsbc.apply(self)
             for bc in self.boundary_conditions:
-                bc.apply(self.fi, self.fo, self.stencil)
+                bc.apply(self)
 
             # Compute new density, but not velocity.
             self.macros.density(self)
@@ -409,17 +401,9 @@ class FreeSurfaceModel(Model):
         self.streamer.stream(self.fi, self.fo, self.stencil)
 
         # Apply boundary conditions.
-        self.fsbc.apply(
-            self.fi,
-            self.fo,
-            self.stencil,
-            self.u,
-            self.v,
-            self.vof.I_mask,
-            self.vof.G_mask,
-        )
+        self.fsbc.apply(self)
         for bc in self.boundary_conditions:
-            bc.apply(self.fi, self.fo, self.stencil)
+            bc.apply(self)
 
         # Compute new macroscopic variables
         self.macros.density(self)
