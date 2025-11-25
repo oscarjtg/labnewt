@@ -11,6 +11,13 @@ from labnewt import (
 np.random.seed(42)
 
 
+class DummyModel:
+    def __init__(self, fi, fo, s):
+        self.fi = fi
+        self.fo = fo
+        self.stencil = s
+
+
 def test_left_wall_no_slip():
     s = StencilD2Q9()
     nx = 5
@@ -27,14 +34,15 @@ def test_left_wall_no_slip():
     for q in q_idxs:
         f_out[q] = np.copy(fo[q, y_idxs, x_idxs])
 
-    LeftWallNoSlip().apply(fi, fo, s)
+    model = DummyModel(fi, fo, s)
+    LeftWallNoSlip().apply(model)
 
     # Test for unwanted side effects
-    assert np.allclose(fo, fo0, atol=1.0e-12)
+    assert np.allclose(model.fo, fo0, atol=1.0e-12)
 
     # Test for correct boundary condition
     for q in q_idxs:
-        f_in = fi[s.q_rev[q], y_idxs, x_idxs]
+        f_in = model.fi[s.q_rev[q], y_idxs, x_idxs]
         assert np.allclose(f_in, f_out[q], atol=1.0e-12)
 
 
@@ -54,14 +62,15 @@ def test_right_wall_no_slip():
     for q in q_idxs:
         f_out[q] = np.copy(fo[q, y_idxs, x_idxs])
 
-    RightWallNoSlip().apply(fi, fo, s)
+    model = DummyModel(fi, fo, s)
+    RightWallNoSlip().apply(model)
 
     # Test for unwanted side effects
-    assert np.allclose(fo, fo0, atol=1.0e-12)
+    assert np.allclose(model.fo, fo0, atol=1.0e-12)
 
     # Test for correct boundary condition
     for q in q_idxs:
-        f_in = fi[s.q_rev[q], y_idxs, x_idxs]
+        f_in = model.fi[s.q_rev[q], y_idxs, x_idxs]
         assert np.allclose(f_in, f_out[q], atol=1.0e-12)
 
 
@@ -81,14 +90,15 @@ def test_bottom_wall_no_slip():
     for q in q_idxs:
         f_out[q] = np.copy(fo[q, y_idxs, x_idxs])
 
-    BottomWallNoSlip().apply(fi, fo, s)
+    model = DummyModel(fi, fo, s)
+    BottomWallNoSlip().apply(model)
 
     # Test for unwanted side effects
-    assert np.allclose(fo, fo0, atol=1.0e-12)
+    assert np.allclose(model.fo, fo0, atol=1.0e-12)
 
     # Test for correct boundary condition
     for q in q_idxs:
-        f_in = fi[s.q_rev[q], y_idxs, x_idxs]
+        f_in = model.fi[s.q_rev[q], y_idxs, x_idxs]
         assert np.allclose(f_in, f_out[q], atol=1.0e-12)
 
 
@@ -108,12 +118,13 @@ def test_top_wall_no_slip():
     for q in q_idxs:
         f_out[q] = np.copy(fo[q, y_idxs, x_idxs])
 
-    TopWallNoSlip().apply(fi, fo, s)
+    model = DummyModel(fi, fo, s)
+    TopWallNoSlip().apply(model)
 
     # Test for unwanted side effects
-    assert np.allclose(fo, fo0, atol=1.0e-12)
+    assert np.allclose(model.fo, fo0, atol=1.0e-12)
 
     # Test for correct boundary condition
     for q in q_idxs:
-        f_in = fi[s.q_rev[q], y_idxs, x_idxs]
+        f_in = model.fi[s.q_rev[q], y_idxs, x_idxs]
         assert np.allclose(f_in, f_out[q], atol=1.0e-12)
