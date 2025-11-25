@@ -75,6 +75,6 @@ def _distribute_Mex(
 
     Mqi = np.empty_like(Mqo)
 
-    Streamer().stream(Mqi, Mqo, s)
+    Streamer()._stream(Mqi, Mqo, s)
 
     return M_star + np.sum(Mqi, axis=0) + M_ex_neg - M_ex_pos
