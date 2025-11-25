@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from labnewt import (
     BottomWallNoSlip,
@@ -7,8 +8,20 @@ from labnewt import (
     StencilD2Q9,
     TopWallNoSlip,
 )
+from labnewt.boundary import BoundaryCondition
 
 np.random.seed(42)
+
+
+def test_boundary_condition_protocol():
+    bc = BoundaryCondition()
+
+    class EmptyModel:
+        pass
+
+    model = EmptyModel()
+    with pytest.raises(NotImplementedError):
+        bc.apply(model)
 
 
 class DummyModel:

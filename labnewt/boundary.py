@@ -11,7 +11,7 @@ from ._shift import periodic_shift
 
 class BoundaryCondition:
     def apply(self, model):
-        return NotImplementedError
+        raise NotImplementedError
 
 
 class NoSlip(BoundaryCondition):
