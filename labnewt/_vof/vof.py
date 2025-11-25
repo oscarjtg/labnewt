@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ._distribute_Mex import _distribute_Mex
-from ._dMq import _dMq_
+from ._dMq import _compute_x_nq, _compute_y_nq, compute_dMq_
 from ._Mstar import _Mstar_inplace
 from ._normals import _normals_
 
@@ -19,14 +19,21 @@ class VolumeOfFluid:
         self.I_mask = np.zeros(shape, dtype=np.bool_)
         self.G_mask = np.zeros(shape, dtype=np.bool_)
         self.dMq = np.zeros((stencil.nq, *shape), dtype=np.float64)
-        self.x = np.arange(shape[1])
-        self.y = np.arange(shape[0])
+        self.x = np.arange(shape[1], dtype=int)
+        self.y = np.arange(shape[0], dtype=int)
+        self.x_nq = _compute_x_nq(self.x, shape[1], stencil).astype(int)
+        self.y_nq = _compute_y_nq(self.y, shape[0], stencil).astype(int)
+
+        self.x.flags.writeable = False
+        self.y.flags.writeable = False
+        self.x_nq.flags.writeable = False
+        self.y_nq.flags.writeable = False
 
     def initialise(self, model):
         self._initialise(model.r)
 
-    def update(self, model):
-        self._step(model.fo, model.r, model.stencil)
+    def update(self, model, max_iter=5):
+        self._step(model.fi, model.fo, model.r, model.stencil, max_iter)
 
     def _initialise(self, rho):
         self.M = self.phi * rho
@@ -47,9 +54,19 @@ class VolumeOfFluid:
         # Update unit normal vectors.
         _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
 
-    def _step(self, fo, rho, stencil):
+    def _step(self, fi, fo, rho, stencil, max_iter):
         # Compute mass exchange in each direction.
-        _dMq_(self.dMq, fo, self.phi, self.F_mask, self.I_mask, stencil)
+        compute_dMq_(
+            self.dMq,
+            fi,
+            fo,
+            self.phi,
+            self.x_nq,
+            self.y_nq,
+            self.F_mask,
+            self.I_mask,
+            stencil,
+        )
 
         # Add the exchanged masses to self.M.
         _Mstar_inplace(self.M, self.dMq)
@@ -64,10 +81,7 @@ class VolumeOfFluid:
                 self.M, rho, self.norm_x, self.norm_y, self.I_mask, stencil
             )
             counter += 1
-            if counter > 5:
-                # print("Warning: _distribute_Mex iterations did not converge.")
-                # print(f"M_min = {self.M.min()}")
-                # print(f"M_max = {self.M.max()}")
+            if counter > max_iter:
                 break
 
         # Update phi, masks, and normals.

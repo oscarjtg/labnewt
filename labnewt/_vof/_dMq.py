@@ -6,6 +6,64 @@ from numpy.typing import NDArray
 from ..stencil import Stencil
 
 
+def compute_dMq_(
+    dMq: NDArray[np.float64],
+    fi: NDArray[np.float64],
+    fo: NDArray[np.float64],
+    phi: NDArray[np.float64],
+    x_nq: NDArray[np.int64],
+    y_nq: NDArray[np.int64],
+    F_mask: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    stencil: Stencil,
+):
+    """
+    Computes mass exchange in each lattice direction (q) at each cell.
+
+    Modifies `dMq` in place.
+
+    `fi`, `fo`, `phi`, `x_nq`, `y_nq`, `F_mask`, and `I_mask` are read-only
+    and are not changed.
+
+    `fi` and `fo` are directly from `FreeSurfaceModel` object.
+
+    Parameters
+    ----------
+    dMq : np.ndarray
+        Three-dimensional numpy array of floats of shape (nq, ny, nx).
+        Contains mass exchanged in each lattice direction.
+    fi : np.ndarray
+        Three-dimensional numpy array of floats of shape (nq, ny, nx).
+        Contains incoming distribution functions.
+    fo : np.ndarray
+        Three-dimensional numpy array of floats of shape (nq, ny, nx).
+        Contains outgoing distribution functions.
+    phi : np.ndarray
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell fill fractions.
+    x_nq : np.ndarray
+        Three-dimensional numpy array of ints of shape (ny, nx).
+        Contains x indices of neighbouring cells.
+    y_nq : np.ndarray
+        Three-dimensional numpy array of ints of shape (ny, nx).
+        Contains y indices of neighbouring cells.
+    F_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks FLUID cells.
+    I_mask : np.ndarray
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Marks INTERFACE cells.
+    stencil : Stencil
+
+    Returns
+    -------
+    None
+    """
+    f_in = fi[stencil.q_rev]
+    f_out = fo
+    _compute_dMq_(dMq, f_in, f_out, phi, x_nq, y_nq, F_mask, I_mask)
+
+
 def _compute_dMq_(
     dMq: NDArray[np.float64],
     f_in: NDArray[np.float64],
@@ -21,8 +79,12 @@ def _compute_dMq_(
 
     Modifies `dMq` in place.
 
-    `fo`, `phi`, `x_nq`, `y_nq`, `F_mask`, and `I_mask` are read-only
+    `f_in`, `f_out`, `phi`, `x_nq`, `y_nq`, `F_mask`, and `I_mask` are read-only
     and are not changed.
+
+    `f_in` is either
+        (i)  `model.fi` but in the reverse directions, or
+        (ii) `model.fo` shifted by e_q and with directions reversed.
 
     Parameters
     ----------
@@ -129,9 +191,9 @@ def _dMq_(
     y_nq = _compute_y_nq(y, ny, s)
     x_nq = _compute_x_nq(x, nx, s)
 
-    idx_qrev = s.q_rev[:, np.newaxis, np.newaxis]
+    idx_q_rev = s.q_rev[:, np.newaxis, np.newaxis]
 
-    f_nq = fo[idx_qrev, y_nq, x_nq]
+    f_nq = fo[idx_q_rev, y_nq, x_nq]
     f_here = fo
 
     _compute_dMq_(dMq, f_nq, f_here, phi, x_nq, y_nq, F_mask, I_mask)

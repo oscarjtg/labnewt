@@ -1,9 +1,10 @@
 import numpy as np
 import numpy.testing as npt
 
-from labnewt import StencilD2Q9
+from labnewt import StencilD2Q9, Streamer
 from labnewt._equilibrium import _feq2
-from labnewt._vof import _dMq, _dMq_
+from labnewt._vof import _dMq, _dMq_, compute_dMq_
+from labnewt._vof._dMq import _compute_x_nq, _compute_y_nq
 
 
 def _compute_expected(dMq_shape, fo, phi, F_mask, I_mask, G_mask, s):
@@ -266,6 +267,58 @@ def test_dMq_against_loop_randomized():
     assert np.isclose(np.sum(dMq), 0.0, atol=1.0e-12)
 
     # verify read-only arrays unchanged
+    npt.assert_array_equal(fo, fo_copy)
+    npt.assert_array_equal(phi, phi_copy)
+    npt.assert_array_equal(F_mask, F_copy)
+    npt.assert_array_equal(I_mask, I_copy)
+    npt.assert_array_equal(G_mask, G_copy)
+
+
+def test_compute_dMq_against_loop_randomized():
+    """Randomized test comparing the NumPy implementation to a Python-loop reference."""
+    s = StencilD2Q9()
+    nq = s.nq
+    ny = 7
+    nx = 6
+
+    rng = np.random.default_rng(42)
+    fo = rng.normal(size=(nq, ny, nx)).astype(float)
+    phi = rng.random((ny, nx)).astype(float)
+
+    # create masks ensuring exclusivity; use stripes to be deterministic
+    F_mask, I_mask, G_mask = make_masks(ny, nx, pattern="stripes")
+
+    # copy read-only arrays
+    fo_copy = fo.copy()
+    phi_copy = phi.copy()
+    F_copy = F_mask.copy()
+    I_copy = I_mask.copy()
+    G_copy = G_mask.copy()
+
+    # run function
+    expected = _dMq(fo, phi, F_mask, I_mask, s)
+
+    computed = np.empty_like(expected)
+
+    fi = np.empty_like(fo)
+    streamer = Streamer()
+    streamer._stream(fi, fo, s)
+
+    fi_copy = np.copy(fi)
+
+    x_nq = _compute_x_nq(np.arange(nx), nx, s)
+    y_nq = _compute_y_nq(np.arange(ny), ny, s)
+
+    compute_dMq_(computed, fi, fo, phi, x_nq, y_nq, F_mask, I_mask, s)
+
+    # compare
+    npt.assert_allclose(computed, expected, rtol=1e-12, atol=1e-12)
+
+    # Mass conservation
+    assert np.isclose(np.sum(computed), 0.0, atol=1.0e-12)
+
+    # verify read-only arrays unchanged
+    npt.assert_array_equal(fi, fi_copy)
     npt.assert_array_equal(fo, fo_copy)
     npt.assert_array_equal(phi, phi_copy)
     npt.assert_array_equal(F_mask, F_copy)
