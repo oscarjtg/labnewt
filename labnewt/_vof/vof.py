@@ -22,16 +22,22 @@ class VolumeOfFluid:
         self.x = np.arange(shape[1])
         self.y = np.arange(shape[0])
 
+    def initialise(self, model):
+        self._initialise(model.r)
+
+    def update(self, model):
+        self._step(model.fo, model.r, model.stencil)
+
+    def _initialise(self, rho):
+        self.M = self.phi * rho
+        self._update_state(rho)
+
     def _set_masks(self, eps=1.0e-05):
         np.less_equal(self.phi, eps, out=self.G_mask)
         np.greater_equal(self.phi, 1.0 - eps, out=self.F_mask)
         np.logical_not(np.logical_or(self.G_mask, self.F_mask), out=self.I_mask)
 
-    def initialise(self, rho):
-        self.M = self.phi * rho
-        self.update_state(rho)
-
-    def update_state(self, rho):
+    def _update_state(self, rho):
         # Update cell fill fraction.
         self.phi = self.M / rho
 
@@ -41,7 +47,7 @@ class VolumeOfFluid:
         # Update unit normal vectors.
         _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
 
-    def step(self, fo, rho, stencil):
+    def _step(self, fo, rho, stencil):
         # Compute mass exchange in each direction.
         _dMq_(self.dMq, fo, self.phi, self.F_mask, self.I_mask, stencil)
 
@@ -65,7 +71,7 @@ class VolumeOfFluid:
                 break
 
         # Update phi, masks, and normals.
-        self.update_state(rho)
+        self._update_state(rho)
 
     def plot_fields(self, path=None):
         """
