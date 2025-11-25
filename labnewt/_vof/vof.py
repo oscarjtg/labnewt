@@ -30,9 +30,16 @@ class VolumeOfFluid:
         self.y_nq.flags.writeable = False
 
     def initialise(self, model):
+        """
+        Sets `self.M`, `self.F_mask`, `self.I_mask`, and `self.G_mask`,
+        based on `model.r` and `self.phi`.
+        """
         self._initialise(model.r)
 
     def update(self, model, max_iter=5):
+        """
+        Updates `self.M`, `self.phi`, `self.F_mask`, `self.I_mask`, and `self.G_mask`.
+        """
         self._step(model.fi, model.fo, model.r, model.stencil, max_iter)
 
     def _initialise(self, rho):
