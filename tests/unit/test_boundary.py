@@ -10,8 +10,6 @@ from labnewt import (
 )
 from labnewt.boundary import BoundaryCondition
 
-np.random.seed(42)
-
 
 def test_boundary_condition_protocol():
     bc = BoundaryCondition()
@@ -36,7 +34,8 @@ def test_left_wall_no_slip():
     nx = 5
     ny = 5
     shape = (ny, nx)
-    fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    fi = rng.random((s.nq, *shape))
     fo = np.copy(fi)
     fo0 = np.copy(fo)
 
@@ -64,7 +63,8 @@ def test_right_wall_no_slip():
     nx = 5
     ny = 5
     shape = (ny, nx)
-    fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    fi = rng.random((s.nq, *shape))
     fo = np.copy(fi)
     fo0 = np.copy(fo)
 
@@ -92,7 +92,8 @@ def test_bottom_wall_no_slip():
     nx = 5
     ny = 5
     shape = (ny, nx)
-    fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    fi = rng.random((s.nq, *shape))
     fo = np.copy(fi)
     fo0 = np.copy(fo)
 
@@ -120,7 +121,8 @@ def test_top_wall_no_slip():
     nx = 5
     ny = 5
     shape = (ny, nx)
-    fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    fi = rng.random((s.nq, *shape))
     fo = np.copy(fi)
     fo0 = np.copy(fo)
 

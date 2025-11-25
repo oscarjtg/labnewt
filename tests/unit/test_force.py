@@ -153,7 +153,7 @@ def test_gravity_force_free_surface_model_conserves_moments():
     r_pre = _m0(f)
     u_pre = _mx(f, s) / r_pre
     v_pre = _my(f, s) / r_pre
-    phi = np.random.random(shape)
+    phi = rng.random(shape)
 
     model.set_r(r_pre)
     model.set_u(u_pre)

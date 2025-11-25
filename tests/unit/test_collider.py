@@ -28,7 +28,8 @@ def test_collider_srt_unit_omega_stationary_fluid():
 
     model = Model(nx, ny, dx, dt, nu)
 
-    model.fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    model.fi = rng.random((s.nq, *shape))
     model.fo = np.empty_like(model.fi)
     model.r = np.ones(shape)
     model.u = np.zeros(shape)
@@ -60,7 +61,8 @@ def test_collider_srt_conserves_moments():
     shape = (ny, nx)
 
     model = Model(nx, ny, 1, 1, 1)
-    model.fi = np.random.rand(s.nq, *shape)
+    rng = np.random.default_rng(42)
+    model.fi = rng.random((s.nq, *shape))
     fi0 = np.copy(model.fi)
 
     model.macros.density(model)

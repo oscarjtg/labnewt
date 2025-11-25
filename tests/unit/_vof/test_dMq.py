@@ -79,9 +79,10 @@ def test_dMq_all_fluid():
     ny = 5
     nx = 6
 
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
+    rng = np.random.default_rng(42)
+    r = 0.95 + 0.1 * rng.random((ny, nx))
+    u = -0.1 + 0.2 * rng.random((ny, nx))
+    v = -0.1 + 0.2 * rng.random((ny, nx))
     fo = _feq2(r, u, v, s)
 
     phi = np.ones_like(r)
@@ -107,9 +108,10 @@ def test_dMq_fluid_interface_gas():
     ny = 5
     nx = 6
 
-    r = 0.95 + 0.1 * np.random.rand(ny, nx)
-    u = -0.1 + 0.2 * np.random.rand(ny, nx)
-    v = -0.1 + 0.2 * np.random.rand(ny, nx)
+    rng = np.random.default_rng(42)
+    r = 0.95 + 0.1 * rng.random((ny, nx))
+    u = -0.1 + 0.2 * rng.random((ny, nx))
+    v = -0.1 + 0.2 * rng.random((ny, nx))
     fo = _feq2(r, u, v, s)
 
     F_mask = np.ones_like(r, dtype=np.bool_)
