@@ -151,7 +151,7 @@ class FreeSurface:
         -------
         None
         """
-        for q in range(s.nq):
+        for q in range(model.stencil.nq):
             self._free_surface_boundary_condition_q(
                 q, model.fi, model.fo, model.stencil, model.u, model.v, model.I_mask, model.G_mask, self.rho_G
             )
