@@ -131,7 +131,7 @@ class Model:
         self.macros.forcing(self)
 
         # Stream step
-        self.streamer.stream(self.fi, self.fo, self.stencil)
+        self.streamer.stream(self)
 
         # Apply boundary conditions.
         for bc in self.boundary_conditions:
@@ -364,7 +364,7 @@ class FreeSurfaceModel(Model):
             self.macros.forcing(self)
 
             # Stream step
-            self.streamer.stream(self.fi, self.fo, self.stencil)
+            self.streamer.stream(self)
 
             # Apply boundary conditions.
             self.fsbc.apply(self)
@@ -398,7 +398,7 @@ class FreeSurfaceModel(Model):
         self.macros.forcing(self)
 
         # Stream step
-        self.streamer.stream(self.fi, self.fo, self.stencil)
+        self.streamer.stream(self)
 
         # Apply boundary conditions.
         self.fsbc.apply(self)

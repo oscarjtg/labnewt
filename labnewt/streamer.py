@@ -6,7 +6,26 @@ from .stencil import Stencil
 
 
 class Streamer:
-    def stream(
+    def stream(self, model):
+        """
+        Streams particles in `model.fo` to `model.fi`.
+
+            fi[q, y, x] = fo[q, y - s.ey[q], x - s.ex[q]]
+
+        Modifies `model.fi` in place.
+        `model.fo` is read-only and remains unchanged.
+
+        Parameters
+        ----------
+        model : Model or FreeSurfaceModel
+
+        Returns
+        -------
+        None
+        """
+        self._stream(model.fi, model.fo, model.stencil)
+
+    def _stream(
         self, fi: NDArray[np.float64], fo: NDArray[np.float64], s: Stencil
     ) -> None:
         """

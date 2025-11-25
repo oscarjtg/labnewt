@@ -10,7 +10,7 @@ def test_streamer_with_d2q9_stencil():
     fo = 1.0 * i + 0.1 * j + 0.01 * k
     fo0 = np.copy(fo)
     fi = np.empty_like(fo)
-    streamer.stream(fi, fo, s)
+    streamer._stream(fi, fo, s)
 
     # fo should not be changed
     assert np.allclose(fo, fo0, atol=1.0e-12)
