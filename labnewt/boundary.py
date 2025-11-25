@@ -153,7 +153,15 @@ class FreeSurface:
         """
         for q in range(model.stencil.nq):
             self._free_surface_boundary_condition_q(
-                q, model.fi, model.fo, model.stencil, model.u, model.v, model.vof.I_mask, model.vof.G_mask, self.rho_G
+                q,
+                model.fi,
+                model.fo,
+                model.stencil,
+                model.u,
+                model.v,
+                model.vof.I_mask,
+                model.vof.G_mask,
+                self.rho_G,
             )
 
     def _free_surface_boundary_condition_q(
