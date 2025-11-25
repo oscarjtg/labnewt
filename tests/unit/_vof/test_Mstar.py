@@ -3,8 +3,6 @@ import numpy.testing as npt
 
 from labnewt._vof import _Mstar_inplace
 
-np.random.seed(42)
-
 
 def compute_Mstar_explicit_loop(M, dMq):
     """
@@ -31,7 +29,8 @@ def test_Mstar_inplace_zeros():
     nq = 9
     ny = 5
     nx = 6
-    M = np.random.rand(ny, nx)
+    rng = np.random.default_rng(42)
+    M = rng.random((ny, nx))
     M0 = np.copy(M)
 
     dMq = np.zeros((nq, ny, nx))
@@ -45,7 +44,8 @@ def test_Mstar_inplace_basic():
     nq = 9
     ny = 5
     nx = 6
-    M = np.random.rand(ny, nx)
+    rng = np.random.default_rng(42)
+    M = rng.random((ny, nx))
     M0 = np.copy(M)
 
     dMq = np.ones((nq, ny, nx)) / nq
@@ -60,7 +60,8 @@ def test_Mstar_inplace_behaviour():
     nq = 9
     ny = 5
     nx = 6
-    M = np.random.rand(ny, nx)
+    rng = np.random.default_rng(42)
+    M = rng.random((ny, nx))
 
     dMq = np.zeros((nq, ny, nx))
     dMq0 = np.copy(dMq)
@@ -83,8 +84,9 @@ def test_Mstar_inplace_compare_implementations():
     ny = 5
     nx = 6
 
-    M = np.random.rand(ny, nx)
-    dMq = np.random.rand(nq, ny, nx)
+    rng = np.random.default_rng(42)
+    M = rng.random((ny, nx))
+    dMq = rng.random((nq, ny, nx))
 
     M0 = np.copy(M)
 

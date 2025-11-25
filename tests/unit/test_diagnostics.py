@@ -27,6 +27,7 @@ def test_average_difference_no_difference():
 def test_average_difference_no_difference_with_mask():
     X_ref = np.ones(10)
     X_com = np.ones(10)
-    mask = np.random.random(10) > 0.5
+    rng = np.random.default_rng(42)
+    mask = rng.random(10) > 0.5
     error = average_difference(X_com, X_ref, mask)
     assert np.isclose(error, 0.0, atol=1.0e-12)

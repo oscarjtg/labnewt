@@ -121,9 +121,9 @@ def test_only_dMq_modified_and_shape_preserved():
     ny = 4
     nx = 5
 
-    rng = np.random.default_rng(12345)
-    fo = rng.random((nq, ny, nx)).astype(float)
-    phi = rng.random((ny, nx)).astype(float)
+    rng = np.random.default_rng(42)
+    fo = rng.random((nq, ny, nx))
+    phi = rng.random((ny, nx))
     F_mask, I_mask, G_mask = make_masks(ny, nx, pattern="checker")
 
     dMq = np.zeros((nq, ny, nx), dtype=float)
@@ -171,8 +171,8 @@ def test_dMq_against_loop_randomized():
     nx = 6
 
     rng = np.random.default_rng(42)
-    fo = rng.normal(size=(nq, ny, nx)).astype(float)
-    phi = rng.random((ny, nx)).astype(float)
+    fo = rng.normal(size=(nq, ny, nx))
+    phi = rng.random((ny, nx))
 
     # create masks ensuring exclusivity; use stripes to be deterministic
     F_mask, I_mask, G_mask = make_masks(ny, nx, pattern="stripes")
