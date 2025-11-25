@@ -9,7 +9,12 @@ from ._equilibrium import _feq2_q
 from ._shift import periodic_shift
 
 
-class NoSlip:
+class BoundaryCondition:
+    def apply(self, model):
+        return NotImplementedError
+
+
+class NoSlip(BoundaryCondition):
     def bounce_back(self, fi, fo, qi, qo, x, y):
         """
         Applies bounce back lattice Boltzmann boundary rule.
@@ -41,7 +46,7 @@ class NoSlip:
 
 
 class LeftWallNoSlip(NoSlip):
-    def apply(self, fi, fo, s):
+    def apply(self, model):
         """
         Applies no slip BC to left wall, which is stationary.
 
@@ -49,28 +54,21 @@ class LeftWallNoSlip(NoSlip):
 
         Parameters
         ----------
-        fi : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        fo : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
+        model : Model or FreeSurfaceModel
 
         Returns
         -------
         None
         """
-        qi = s.q_right
-        qo = s.q_rev[qi]
+        qi = model.stencil.q_right
+        qo = model.stencil.q_rev[qi]
         x = 0
         y = slice(None)
-        self.bounce_back(fi, fo, qi, qo, x, y)
+        self.bounce_back(model.fi, model.fo, qi, qo, x, y)
 
 
 class RightWallNoSlip(NoSlip):
-    def apply(self, fi, fo, s):
+    def apply(self, model):
         """
         Applies no slip BC to right wall, which is stationary.
 
@@ -78,28 +76,21 @@ class RightWallNoSlip(NoSlip):
 
         Parameters
         ----------
-        fi : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        fo : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
+        model : Model or FreeSurfaceModel
 
         Returns
         -------
         None
         """
-        qi = s.q_left
-        qo = s.q_rev[qi]
+        qi = model.stencil.q_left
+        qo = model.stencil.q_rev[qi]
         x = -1
         y = slice(None)
-        self.bounce_back(fi, fo, qi, qo, x, y)
+        self.bounce_back(model.fi, model.fo, qi, qo, x, y)
 
 
 class BottomWallNoSlip(NoSlip):
-    def apply(self, fi, fo, s):
+    def apply(self, model):
         """
         Applies no slip BC to bottom wall, which is stationary.
 
@@ -107,28 +98,21 @@ class BottomWallNoSlip(NoSlip):
 
         Parameters
         ----------
-        fi : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        fo : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
+        model : Model or FreeSurfaceModel
 
         Returns
         -------
         None
         """
-        qi = s.q_up
-        qo = s.q_rev[qi]
+        qi = model.stencil.q_up
+        qo = model.stencil.q_rev[qi]
         x = slice(None)
         y = 0
-        self.bounce_back(fi, fo, qi, qo, x, y)
+        self.bounce_back(model.fi, model.fo, qi, qo, x, y)
 
 
 class TopWallNoSlip(NoSlip):
-    def apply(self, fi, fo, s):
+    def apply(self, model):
         """
         Applies no slip BC to top wall, which is stationary.
 
@@ -136,31 +120,24 @@ class TopWallNoSlip(NoSlip):
 
         Parameters
         ----------
-        fi : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        fo : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
+        model : Model or FreeSurfaceModel
 
         Returns
         -------
         None
         """
-        qi = s.q_down
-        qo = s.q_rev[qi]
+        qi = model.stencil.q_down
+        qo = model.stencil.q_rev[qi]
         x = slice(None)
         y = -1
-        self.bounce_back(fi, fo, qi, qo, x, y)
+        self.bounce_back(model.fi, model.fo, qi, qo, x, y)
 
 
 class FreeSurface:
     def __init__(self, rho_G=1.0):
         self.rho_G = rho_G
 
-    def apply(self, fi, fo, s, u, v, I_mask, G_mask):
+    def apply(self, model):
         """
         Applies free surface boundary condition at interface cells.
 
@@ -168,24 +145,7 @@ class FreeSurface:
 
         Parameters
         ----------
-        fi : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
-        fo : np.ndarray
-            Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
-        s : Stencil
-            Lattice stencil.
-        u : np.ndarray
-            Two-dimensional numpy array of floats containing x-component of velocity.
-            u.shape = (ny, nx)
-        v : np.ndarray
-            Two-dimensional numpy array of floats containing y-component of velocity.
-            v.shape = (ny, nx)
-        I_mask : np.ndarray
-            Two-dimensional numpy array of booleans. shape = (ny, nx)
-        G_mask : np.ndarray
-            Two-dimensional numpy array of booleans. shape = (ny, nx)
+        model : Model or FreeSurfaceModel
 
         Returns
         -------
@@ -193,7 +153,7 @@ class FreeSurface:
         """
         for q in range(s.nq):
             self._free_surface_boundary_condition_q(
-                q, fi, fo, s, u, v, I_mask, G_mask, self.rho_G
+                q, model.fi, model.fo, model.stencil, model.u, model.v, model.I_mask, model.G_mask, self.rho_G
             )
 
     def _free_surface_boundary_condition_q(
