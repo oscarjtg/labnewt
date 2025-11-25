@@ -1,7 +1,15 @@
 import numpy as np
 import numpy.testing as npt
 
-from labnewt import StencilD2Q9, Streamer
+from labnewt import (
+    BottomWallNoSlip,
+    FreeSurfaceModel,
+    LeftWallNoSlip,
+    RightWallNoSlip,
+    StencilD2Q9,
+    Streamer,
+    TopWallNoSlip,
+)
 from labnewt._equilibrium import _feq2
 from labnewt._vof import _dMq, _dMq_, compute_dMq_
 from labnewt._vof._dMq import _compute_x_nq, _compute_y_nq
@@ -324,3 +332,78 @@ def test_compute_dMq_against_loop_randomized():
     npt.assert_array_equal(F_mask, F_copy)
     npt.assert_array_equal(I_mask, I_copy)
     npt.assert_array_equal(G_mask, G_copy)
+
+
+def test_no_mass_exchange_across_wall():
+    nx = 3
+    ny = 4
+    dx = 1
+    dt = 1
+    nu = 0.1
+    stencil = StencilD2Q9()
+    model = FreeSurfaceModel(nx, ny, dx, dt, nu, stencil=stencil)
+    model.add_boundary_condition(LeftWallNoSlip())
+    model.add_boundary_condition(RightWallNoSlip())
+    model.add_boundary_condition(BottomWallNoSlip())
+    model.add_boundary_condition(TopWallNoSlip())
+
+    rng = np.random.default_rng(42)
+    model.fo = rng.normal(size=(stencil.nq, ny, nx)).astype(float)
+    model.fi = np.copy(model.fo)
+    model.vof.phi = rng.random((ny, nx)).astype(float)
+
+    # Compute all macroscopic variables
+    model.macros.density(model)
+    model.macros.velocity_x(model)
+    model.macros.velocity_y(model)
+    model.macros.velocity_x_coll(model)
+    model.macros.velocity_y_coll(model)
+
+    # Set vof
+    model.vof.initialise(model)
+
+    # Do streaming step, which sets `model.fi`.
+    model.streamer.stream(model)
+
+    # Apply boundary conditions.
+    for bc in model.boundary_conditions:
+        bc.apply(model)
+
+    # Do mass exchange
+    dMq = np.ones_like(model.fi)
+    x_nq = _compute_x_nq(np.arange(nx), nx, stencil)
+    y_nq = _compute_y_nq(np.arange(ny), ny, stencil)
+    compute_dMq_(
+        dMq,
+        model.fi,
+        model.fo,
+        model.vof.phi,
+        x_nq,
+        y_nq,
+        model.vof.F_mask,
+        model.vof.I_mask,
+        stencil,
+    )
+
+    # Left wall: no mass exchange for q = {2, 6, 7}
+    assert np.allclose(dMq[2, :, 0], np.zeros(ny))
+    assert np.allclose(dMq[6, :, 0], np.zeros(ny))
+    assert np.allclose(dMq[7, :, 0], np.zeros(ny))
+
+    # Right wall: no mass exchange for q = {1, 5, 8}
+    assert np.allclose(dMq[1, :, -1], np.zeros(ny))
+    assert np.allclose(dMq[5, :, -1], np.zeros(ny))
+    assert np.allclose(dMq[8, :, -1], np.zeros(ny))
+
+    # Bottom wall: no mass exchange for q = {4, 6, 8}
+    assert np.allclose(dMq[4, 0, :], np.zeros(nx))
+    assert np.allclose(dMq[6, 0, :], np.zeros(nx))
+    assert np.allclose(dMq[8, 0, :], np.zeros(nx))
+
+    # Top wall: no mass exchange for q = {3, 5, 7}
+    assert np.allclose(dMq[3, -1, :], np.zeros(nx))
+    assert np.allclose(dMq[5, -1, :], np.zeros(nx))
+    assert np.allclose(dMq[7, -1, :], np.zeros(nx))
+
+    # Makes sure not all zeros
+    assert not np.allclose(dMq, np.zeros_like(dMq))
