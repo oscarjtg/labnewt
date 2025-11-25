@@ -337,7 +337,7 @@ class FreeSurfaceModel(Model):
     def _initialise(self, do_mei=False):
         """Initialise model."""
         self._initialise_feq2()
-        self.vof.initialise(self.r)
+        self.vof.initialise(self)
 
         # Mei's method: timestep but without evolving velocity
         # until fi stabilises.
@@ -411,7 +411,7 @@ class FreeSurfaceModel(Model):
         self.macros.velocity_y(self)
 
         # Update free surface
-        self.vof.step(self.fo, self.r, self.stencil)
+        self.vof.update(self)
 
         # Update time
         self.clock += self.dt
