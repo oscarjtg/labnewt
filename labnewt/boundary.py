@@ -25,10 +25,10 @@ class NoSlip(BoundaryCondition):
         ----------
         fi : np.ndarray
             Three-dimensional numpy array of shape (nq, ny, nx).
-            Modified in place.
+            Contains incoming distrbution functions. Modified in place.
         fo : np.ndarray
             Three-dimensional numpy array of shape (nq, ny, nx).
-            Not modified.
+            Contains outgoing distribution functions. Not modified.
         qi : int
             Lattice index of incoming particles.
         qo : int
@@ -50,7 +50,7 @@ class LeftWallNoSlip(NoSlip):
         """
         Applies no slip BC to left wall, which is stationary.
 
-        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+        Modifies `model.fi` in place.
 
         Parameters
         ----------
@@ -72,7 +72,7 @@ class RightWallNoSlip(NoSlip):
         """
         Applies no slip BC to right wall, which is stationary.
 
-        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+        Modifies `model.fi` in place.
 
         Parameters
         ----------
@@ -94,7 +94,7 @@ class BottomWallNoSlip(NoSlip):
         """
         Applies no slip BC to bottom wall, which is stationary.
 
-        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+        Modifies `model.fi` in place.
 
         Parameters
         ----------
@@ -116,7 +116,7 @@ class TopWallNoSlip(NoSlip):
         """
         Applies no slip BC to top wall, which is stationary.
 
-        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+        Modifies `model.fi` in place.
 
         Parameters
         ----------
@@ -141,7 +141,7 @@ class FreeSurface:
         """
         Applies free surface boundary condition at interface cells.
 
-        Modifies `fi` in place. `fo` is read-only and remains unchanged.
+        Modifies `model.fi` in place.
 
         Parameters
         ----------
@@ -168,21 +168,26 @@ class FreeSurface:
         ----------
         q : int
             Lattice vector index
-        f : np.ndarray
-            Three dimensional numpy array of floats containing distribution functions.
-            f.shape = (nq, ny, nx)
+        fi : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Contains incoming distrbution functions. Modified in place.
+        fo : np.ndarray
+            Three-dimensional numpy array of shape (nq, ny, nx).
+            Contains outgoing distribution functions. Not modified.
         s : stencil
-            Lattice stencil
+            Lattice stencil object.
         u : np.ndarray
-            Two-dimensional numpy array of floats containing x-component of velocity.
-            u.shape = (ny, nx)
+            Two-dimensional numpy array of floats of shape (ny, nx).
+            Contains velocity x-components.
         v : np.ndarray
-            Two-dimensional numpy array of floats containing y-component of velocity.
-            v.shape = (ny, nx)
+            Two-dimensional numpy array of floats of shape (ny, nx).
+            Contains velocity y-components.
         I_mask : np.ndarray
-            Two-dimensional numpy array of booleans. shape = (ny, nx)
+            Two-dimensional numpy array of booleans of shape (ny, nx).
+            Contains `True` at INTERFACE cells, otherwise `False`.
         G_mask : np.ndarray
-            Two-dimensional numpy array of booleans. shape = (ny, nx)
+            Two-dimensional numpy array of booleans of shape (ny, nx).
+            Contains `True` at GAS cells, otherwise `False`.
         rho_G : float
             Gas density, in lattice units. Default = 1.0
 
