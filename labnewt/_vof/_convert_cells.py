@@ -35,7 +35,7 @@ def _convert_cells_(
         `True` at cells that have undergone I->F transition.
     to_gas : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
-        `True` at cells that have undergone I-> G transition.
+        `True` at cells that have undergone I->G transition.
 
     Returns
     -------
@@ -100,7 +100,7 @@ def _convert_FI_(
         `True` at INTERFACE cells.
     to_gas : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
-        `True` at cells that have undergone I-> G transition.
+        `True` at cells that have undergone I->G transition.
 
     Returns
     -------
@@ -197,3 +197,82 @@ def _check_neighbours_true_(
 
     for direction in range(stencil.number_of_neighbours):
         neighbour[:] |= periodic_shift(mask, stencil, direction)
+
+    return
+
+
+def _identify_underfull_(
+    to_gas: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    M: NDArray[np.float64],
+    eps: float = 1.0e-06
+) -> None:
+    """
+    Identify over-full INTERFACE cells; mark them in `to_gas`.
+
+    An underfull cell is one where M < -eps.
+
+    Modifies `to_gas` in-place.
+
+    Parameters
+    ----------
+    to_gas : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Modified in-place to contain `True` at underfull INTERFACE cells.
+    I_mask : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at INTERFACE cells.
+    M : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell mass (fill fraction * density).
+    rho : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell density.
+    eps : float
+        Float giving a numerical regularisation on the "underfull" condition.
+
+    Returns
+    -------
+    None
+    """
+    np.less(M, -eps, out=to_gas)
+    np.logical_and(to_gas, I_mask, out=to_gas)
+
+
+def _identify_overfull_(
+    to_fluid: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    M: NDArray[np.float64],
+    rho: NDArray[np.float64],
+    eps: float = 1.0e-06
+) -> None:
+    """
+    Identify over-full INTERFACE cells; mark them in `to_fluid`.
+
+    An overfull cell is one where M > rho + eps.
+
+    Modifies `to_fluid` in-place.
+
+    Parameters
+    ----------
+    to_fluid : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        Modified in-place to contain `True` at overfull INTERFACE cells.
+    I_mask : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at INTERFACE cells.
+    M : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell mass (fill fraction * density).
+    rho : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains cell density.
+    eps : float
+        Float giving a numerical regularisation on the "overfull" condition.
+
+    Returns
+    -------
+    None
+    """
+    np.greater(M + eps, rho, out=to_fluid)
+    np.logical_and(to_fluid, I_mask, out=to_fluid)
