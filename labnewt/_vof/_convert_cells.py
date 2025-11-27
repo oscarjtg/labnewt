@@ -10,14 +10,14 @@ def _convert_cells_(
     F_mask: NDArray[np.bool_],
     I_mask: NDArray[np.bool_],
     G_mask: NDArray[np.bool_],
-    cIF: NDArray[np.bool_],
-    cIG: NDArray[np.bool_],
+    to_fluid: NDArray[np.bool_],
+    to_gas: NDArray[np.bool_],
 ) -> None:
     """
     Convert cell types of over- or under-filled cells and their neighbours.
 
     Modifies `F_mask`, `I_mask`, and `G_mask` in-place.
-    `cIF` and `cIG` are read-only and are not changed.
+    `to_fluid` and `to_gas` are read-only and are not changed.
 
     Parameters
     ----------
@@ -30,10 +30,10 @@ def _convert_cells_(
     G_mask : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at GAS cells.
-    cIF : NDArray[np.bool_]
+    to_fluid : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at cells that have undergone I->F transition.
-    cIG : NDArray[np.bool_]
+    to_gas : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at cells that have undergone I-> G transition.
 
@@ -41,22 +41,22 @@ def _convert_cells_(
     -------
     None
     """
-    _convert_GI_(G_mask, I_mask, cIF)
-    _convert_FI_(F_mask, I_mask, cIG)
-    I_mask[cIF] = False
-    I_mask[cIG] = False
-    F_mask[cIF] = True
-    G_mask[cIG] = True
+    _convert_GI_(G_mask, I_mask, to_fluid)
+    _convert_FI_(F_mask, I_mask, to_gas)
+    I_mask[to_fluid] = False
+    I_mask[to_gas] = False
+    F_mask[to_fluid] = True
+    G_mask[to_gas] = True
 
 
 def _convert_GI_(
-    G_mask: NDArray[np.bool_], I_mask: NDArray[np.bool_], cIF: NDArray[np.bool_]
+    G_mask: NDArray[np.bool_], I_mask: NDArray[np.bool_], to_fluid: NDArray[np.bool_]
 ) -> None:
     """
-    For cIF cells, convert neighbouring GAS cells to INTERFACE cells.
+    For to_fluid cells, convert neighbouring GAS cells to INTERFACE cells.
 
     Modifies `G_mask` and `I_mask` in-place.
-    `cIF` is read-only and is not changed.
+    `to_fluid` is read-only and is not changed.
 
     Parameters
     ----------
@@ -66,7 +66,7 @@ def _convert_GI_(
     I_mask : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at INTERFACE cells.
-    cIF : NDArray[np.bool_]
+    to_fluid : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at cells that have undergone I->F transition.
 
@@ -74,21 +74,21 @@ def _convert_GI_(
     -------
     None
     """
-    assert _check_subset(cIF, I_mask)
-    neighbour_transitioned = _check_neighbours_true(cIF)
+    assert _check_subset(to_fluid, I_mask)
+    neighbour_transitioned = _check_neighbours_true(to_fluid)
     cells_to_convert = G_mask & neighbour_transitioned
     G_mask[cells_to_convert] = False
     I_mask[cells_to_convert] = True
 
 
 def _convert_FI_(
-    F_mask: NDArray[np.bool_], I_mask: NDArray[np.bool_], cIG: NDArray[np.bool_]
+    F_mask: NDArray[np.bool_], I_mask: NDArray[np.bool_], to_gas: NDArray[np.bool_]
 ) -> None:
     """
-    For cIG cells, convert neighbouring FLUID cells to INTERFACE cells.
+    For to_gas cells, convert neighbouring FLUID cells to INTERFACE cells.
 
     Modifies `F_mask` and `I_mask` in-place.
-    `cIG` is read-only and is not changed.
+    `to_gas` is read-only and is not changed.
 
     Parameters
     ----------
@@ -98,7 +98,7 @@ def _convert_FI_(
     I_mask : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at INTERFACE cells.
-    cIG : NDArray[np.bool_]
+    to_gas : NDArray[np.bool_]
         Two-dimensional numpy array of bools of shape (ny, nx).
         `True` at cells that have undergone I-> G transition.
 
@@ -106,8 +106,8 @@ def _convert_FI_(
     -------
     None
     """
-    assert _check_subset(cIG, I_mask)
-    neighbour_transitioned = _check_neighbours_true(cIG)
+    assert _check_subset(to_gas, I_mask)
+    neighbour_transitioned = _check_neighbours_true(to_gas)
     cells_to_convert = F_mask & neighbour_transitioned
     F_mask[cells_to_convert] = False
     I_mask[cells_to_convert] = True
