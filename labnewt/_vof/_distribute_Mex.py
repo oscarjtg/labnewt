@@ -14,7 +14,9 @@ def _distribute_Mex(
     s: Stencil,
 ) -> NDArray[np.float64]:
     """
-    Distribute excess mass.
+    Distribute excess mass. Returns array with cell mass after redistribution.
+
+    All inputs are read-only and are not changed.
 
     Parameters
     ----------
@@ -42,20 +44,67 @@ def _distribute_Mex(
         Two-dimensional numpy array of floats of shape (ny, nx).
         Contains cell mass after redistribution of excess mass
     """
-    ny, nx = M_star.shape
+    # Identify cells that are converting...
+    to_gas = I_mask & (M_star < 0)
+    to_fluid = I_mask & (M_star > rho)
+
+    M = np.copy(M_star)
+    _distribute_Mex_(M, rho, norm_x, norm_y, to_fluid, to_gas, s)
+
+    return M
+
+
+def _distribute_Mex_(
+    M: NDArray[np.float64],
+    rho: NDArray[np.float64],
+    norm_x: NDArray[np.float64],
+    norm_y: NDArray[np.float64],
+    to_fluid: NDArray[np.bool_],
+    to_gas: NDArray[np.bool_],
+    s: Stencil,
+) -> None:
+    """
+    Distribute excess mass.
+
+    Modifies `M` in-place
+
+    Parameters
+    ----------
+    M : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains mass at each grid cell redistributed after streaming.
+    rho : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains density at each grid cell after streaming.
+    norm_x : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains x-component of unit surface normal.
+    norm_y : NDArray[np.float64]
+        Two-dimensional numpy array of floats of shape (ny, nx).
+        Contains y-component of unit surface normal.
+    to_fluid : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at cells that have undergone I->F transition.
+    to_gas : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at cells that have undergone I->G transition.
+    s : Stencil
+        Lattice stencil.
+
+    Returns
+    -------
+    None
+    """
+    ny, nx = M.shape
     nq = s.nq
     dots = (
         s.ex[:, np.newaxis, np.newaxis] * norm_x[np.newaxis, :, :]
         + s.ey[:, np.newaxis, np.newaxis] * norm_y[np.newaxis, :, :]
     )
 
-    # Identify cells that are converting...
-    to_gas = I_mask & (M_star < 0)
-    to_fluid = I_mask & (M_star > rho)
-
     # Excess mass
-    M_ex_neg = np.where(to_gas, -M_star, 0.0)
-    M_ex_pos = np.where(to_fluid, M_star - rho, 0.0)
+    M_ex_neg = np.where(to_gas, -M, 0.0)
+    M_ex_pos = np.where(to_fluid, M - rho, 0.0)
 
     # Selectors
     sel_neg = (dots < 0) & to_gas[np.newaxis, :, :]
@@ -77,4 +126,4 @@ def _distribute_Mex(
 
     Streamer()._stream(Mqi, Mqo, s)
 
-    return M_star + np.sum(Mqi, axis=0) + M_ex_neg - M_ex_pos
+    M[:] = M + np.sum(Mqi, axis=0) + M_ex_neg - M_ex_pos

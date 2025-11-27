@@ -3,7 +3,8 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ._distribute_Mex import _distribute_Mex
+from ._convert_cells import _convert_cells_, _identify_underfull_, _identify_overfull_
+from ._distribute_Mex import _distribute_Mex_
 from ._dMq import _compute_x_nq, _compute_y_nq, compute_dMq_
 from ._Mstar import _Mstar_inplace
 from ._normals import _normals_
@@ -18,6 +19,8 @@ class VolumeOfFluid:
         self.F_mask = np.zeros(shape, dtype=np.bool_)
         self.I_mask = np.zeros(shape, dtype=np.bool_)
         self.G_mask = np.zeros(shape, dtype=np.bool_)
+        self.to_gas = np.zeros(shape, dtype=np.bool_)
+        self.to_fluid = np.zeros(shape, dtype=np.bool_)
         self.dMq = np.zeros((stencil.nq, *shape), dtype=np.float64)
         self.x = np.arange(shape[1], dtype=int)
         self.y = np.arange(shape[0], dtype=int)
@@ -43,7 +46,7 @@ class VolumeOfFluid:
         self._step(model.fi, model.fo, model.r, model.stencil, max_iter)
 
     def _initialise(self, rho):
-        self.M = self.phi * rho
+        self.M[:] = self.phi * rho
         self._update_state(rho)
 
     def _set_masks(self, eps=1.0e-05):
@@ -53,7 +56,7 @@ class VolumeOfFluid:
 
     def _update_state(self, rho):
         # Update cell fill fraction.
-        self.phi = self.M / rho
+        np.divide(self.M, rho, out=self.phi)
 
         # Update masks
         self._set_masks()
@@ -78,21 +81,20 @@ class VolumeOfFluid:
         # Add the exchanged masses to self.M.
         _Mstar_inplace(self.M, self.dMq)
 
-        # Identify INTERFACE cells with excess mass and transfer to neighbours.
-        def within_bounds(phi, eps=1.0e-05):
-            return np.all((-eps <= phi) & (phi <= 1.0 + eps))
+        # Identify INTERFACE cells with excess mass.
+        _identify_underfull_(self.to_gas, self.I_mask, self.M)
+        _identify_overfull_(self.to_fluid, self.I_mask, self.M, rho)
 
-        counter = 0
-        while not within_bounds(self.M / rho):
-            self.M = _distribute_Mex(
-                self.M, rho, self.norm_x, self.norm_y, self.I_mask, stencil
-            )
-            counter += 1
-            if counter > max_iter:
-                break
+        # Convert cell types.
+        _convert_cells_(self.F_mask, self.I_mask, self.G_mask, self.to_fluid, self.to_gas)
 
-        # Update phi, masks, and normals.
-        self._update_state(rho)
+        # Redistribute excess mass.
+        _distribute_Mex_(self.M, rho, self.norm_x, self.norm_y, self.to_fluid, self.to_gas, stencil)
+
+        # Update phi and normals.
+        np.divide(self.M, rho, out=self.phi)
+        _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
+
 
     def plot_fields(self, path=None):
         """
