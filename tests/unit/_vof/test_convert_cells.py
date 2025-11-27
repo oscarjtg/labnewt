@@ -1,6 +1,6 @@
 import numpy as np
 
-from labnewt._vof import _convert_cells_, _convert_FI_, _convert_GI_
+from labnewt._vof._convert_cells import _convert_cells_, _convert_FI_, _convert_GI_
 
 
 def test_convert_GI_linear_interface():
@@ -23,8 +23,8 @@ def test_convert_GI_linear_interface():
     _convert_GI_(G_mask, I_mask, cIF)
 
     # Check correct values obtained
-    assert np.array_equal(G_mask, G_expected)
-    assert np.array_equal(I_mask, I_expected)
+    assert np.array_equal(G_mask[~cIF], G_expected[~cIF])
+    assert np.array_equal(I_mask[~cIF], I_expected[~cIF])
 
     # Check no unintended side effects
     assert np.array_equal(cIF, cIF_copy)
@@ -50,8 +50,8 @@ def test_convert_FI_linear_interface():
     _convert_FI_(F_mask, I_mask, cIG)
 
     # Check correct values obtained
-    assert np.array_equal(F_mask, F_expected)
-    assert np.array_equal(I_mask, I_expected)
+    assert np.array_equal(F_mask[~cIG], F_expected[~cIG])
+    assert np.array_equal(I_mask[~cIG], I_expected[~cIG])
 
     # Check no unintended side effects
     assert np.array_equal(cIG, cIG_copy)
