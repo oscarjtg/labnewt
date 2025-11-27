@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ._convert_cells import _convert_cells_, _identify_underfull_, _identify_overfull_
+from ._convert_cells import _convert_cells_, _identify_overfull_, _identify_underfull_
 from ._distribute_Mex import _distribute_Mex_
 from ._dMq import _compute_x_nq, _compute_y_nq, compute_dMq_
 from ._Mstar import _Mstar_inplace
@@ -86,15 +86,18 @@ class VolumeOfFluid:
         _identify_overfull_(self.to_fluid, self.I_mask, self.M, rho)
 
         # Convert cell types.
-        _convert_cells_(self.F_mask, self.I_mask, self.G_mask, self.to_fluid, self.to_gas)
+        _convert_cells_(
+            self.F_mask, self.I_mask, self.G_mask, self.to_fluid, self.to_gas
+        )
 
         # Redistribute excess mass.
-        _distribute_Mex_(self.M, rho, self.norm_x, self.norm_y, self.to_fluid, self.to_gas, stencil)
+        _distribute_Mex_(
+            self.M, rho, self.norm_x, self.norm_y, self.to_fluid, self.to_gas, stencil
+        )
 
         # Update phi and normals.
         np.divide(self.M, rho, out=self.phi)
         _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
-
 
     def plot_fields(self, path=None):
         """

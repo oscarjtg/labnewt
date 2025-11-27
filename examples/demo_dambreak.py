@@ -18,7 +18,7 @@ if __name__ == "__main__":
     dx = 1  # grid spacing
     dt = 1  # time step
     tf = 5000.0  # end time
-    g = 0.0002  # gravitational acceleration
+    g = 0.0001  # gravitational acceleration
 
     eta_args = (ny / 2, ny / 10, nx / 2, 0.0)
 
@@ -40,13 +40,10 @@ if __name__ == "__main__":
     model.add_boundary_condition(TopWallNoSlip())
 
     sim = Simulation(model, stop_time=tf)
-    save_fields = ["r", "u", "v", "vof.phi"]
+    save_fields = ["r", "u", "v", "vof.phi", "vof.F_mask", "vof.I_mask", "vof.G_mask"]
     save_path = "./examples/data/demo_dambreak.nc"
     sim.callbacks["netcdfwriter"] = NetCDFWriter(save_fields, save_path, 25)
     sim.add_callback(
         lambda m: m.print_means(), "print_means", np.floor(tf / dt), on_init=True
     )
-
     sim.run()
-
-    model.print_means()

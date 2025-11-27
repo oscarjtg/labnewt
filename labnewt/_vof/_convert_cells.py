@@ -205,7 +205,7 @@ def _identify_underfull_(
     to_gas: NDArray[np.bool_],
     I_mask: NDArray[np.bool_],
     M: NDArray[np.float64],
-    eps: float = 1.0e-06
+    eps: float = 1.0e-06,
 ) -> None:
     """
     Identify over-full INTERFACE cells; mark them in `to_gas`.
@@ -244,7 +244,7 @@ def _identify_overfull_(
     I_mask: NDArray[np.bool_],
     M: NDArray[np.float64],
     rho: NDArray[np.float64],
-    eps: float = 1.0e-06
+    eps: float = 1.0e-06,
 ) -> None:
     """
     Identify over-full INTERFACE cells; mark them in `to_fluid`.
