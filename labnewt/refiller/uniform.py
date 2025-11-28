@@ -4,7 +4,6 @@ import numpy as np
 from numpy.typing import NDArray
 
 from .._equilibrium import _feq2
-from ..model import Model
 from .base import Refiller
 
 
@@ -24,7 +23,7 @@ class UniformRefiller(Refiller):
         self.u = velocity_x
         self.v = velocity_y
 
-    def fill(self, model: Model, needs_filling: NDArray[np.bool_]):
+    def fill(self, model, needs_filling: NDArray[np.bool_]):
         """
         Fill cells where `needs_filling` is `True`.
 
