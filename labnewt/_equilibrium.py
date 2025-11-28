@@ -15,7 +15,7 @@ def _feq2(r, u, v, s):
         Contains x-component of fluid velocity.
     v : np.ndarray or float
         Two-dimensional array of floats of shape (ny, nx), or float.
-        Contains x-component of fluid velocity.
+        Contains y-component of fluid velocity.
     s : Stencil
         Stencil object defining lattice velocities and weights in arrays of length nq.
 
@@ -46,7 +46,7 @@ def _feq2_q(q, r, u, v, s):
         Contains x-component of fluid velocity.
     v : np.ndarray or float
         Two-dimensional array of floats of shape (ny, nx), or float.
-        Contains x-component of fluid velocity.
+        Contains y-component of fluid velocity.
     s : Stencil
         Stencil object defining lattice velocities and weights in arrays of length nq.
 
