@@ -41,12 +41,13 @@ def _convert_cells_(
     -------
     None
     """
-    _convert_GI_(G_mask, I_mask, to_fluid)
     _convert_FI_(F_mask, I_mask, to_gas)
-    I_mask[to_fluid] = False
     I_mask[to_gas] = False
-    F_mask[to_fluid] = True
     G_mask[to_gas] = True
+
+    _convert_GI_(G_mask, I_mask, to_fluid)
+    I_mask[to_fluid] = False
+    F_mask[to_fluid] = True
 
 
 def _convert_GI_(
