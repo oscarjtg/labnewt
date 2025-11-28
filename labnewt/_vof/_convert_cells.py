@@ -6,17 +6,44 @@ from numpy.typing import NDArray
 from ..streamer import periodic_shift
 
 
+def convert_cells_(vof):
+    """
+    Convert cell types of over- or under-filled cells and their neighbours.
+
+    Modifies `vof.F_mask`, `vof.I_mask`, `vof.G_mask`,
+    and `vof.gas_to_interface` in-place.
+
+    Parameters
+    ----------
+    vof : VolumeOfFluid
+        A VolumeOfFluid object.
+
+    Returns
+    -------
+    None
+    """
+    _convert_cells_(
+        vof.F_mask,
+        vof.I_mask,
+        vof.G_mask,
+        vof.to_fluid,
+        vof.to_gas,
+        vof.gas_to_interface,
+    )
+
+
 def _convert_cells_(
     F_mask: NDArray[np.bool_],
     I_mask: NDArray[np.bool_],
     G_mask: NDArray[np.bool_],
     to_fluid: NDArray[np.bool_],
     to_gas: NDArray[np.bool_],
+    gas_to_interface: NDArray[np.bool_] = None,
 ) -> None:
     """
     Convert cell types of over- or under-filled cells and their neighbours.
 
-    Modifies `F_mask`, `I_mask`, and `G_mask` in-place.
+    Modifies `F_mask`, `I_mask`, `G_mask`, and `gas_to_interface` in-place.
     `to_fluid` and `to_gas` are read-only and are not changed.
 
     Parameters
@@ -45,41 +72,9 @@ def _convert_cells_(
     I_mask[to_gas] = False
     G_mask[to_gas] = True
 
-    _convert_GI_(G_mask, I_mask, to_fluid)
+    _convert_GI_(G_mask, I_mask, to_fluid, gas_to_interface)
     I_mask[to_fluid] = False
     F_mask[to_fluid] = True
-
-
-def _convert_GI_(
-    G_mask: NDArray[np.bool_], I_mask: NDArray[np.bool_], to_fluid: NDArray[np.bool_]
-) -> None:
-    """
-    For to_fluid cells, convert neighbouring GAS cells to INTERFACE cells.
-
-    Modifies `G_mask` and `I_mask` in-place.
-    `to_fluid` is read-only and is not changed.
-
-    Parameters
-    ----------
-    G_mask : NDArray[np.bool_]
-        Two-dimensional numpy array of bools of shape (ny, nx).
-        `True` at GAS cells.
-    I_mask : NDArray[np.bool_]
-        Two-dimensional numpy array of bools of shape (ny, nx).
-        `True` at INTERFACE cells.
-    to_fluid : NDArray[np.bool_]
-        Two-dimensional numpy array of bools of shape (ny, nx).
-        `True` at cells that have undergone I->F transition.
-
-    Returns
-    -------
-    None
-    """
-    assert _check_subset(to_fluid, I_mask)
-    neighbour_transitioned = _check_neighbours_true(to_fluid)
-    cells_to_convert = G_mask & neighbour_transitioned
-    G_mask[cells_to_convert] = False
-    I_mask[cells_to_convert] = True
 
 
 def _convert_FI_(
@@ -112,6 +107,47 @@ def _convert_FI_(
     cells_to_convert = F_mask & neighbour_transitioned
     F_mask[cells_to_convert] = False
     I_mask[cells_to_convert] = True
+
+
+def _convert_GI_(
+    G_mask: NDArray[np.bool_],
+    I_mask: NDArray[np.bool_],
+    to_fluid: NDArray[np.bool_],
+    gas_to_interface=None,
+) -> None:
+    """
+    For to_fluid cells, convert neighbouring GAS cells to INTERFACE cells.
+
+    Modifies `G_mask`, `I_mask`, and `gas_to_interface` in-place.
+    `to_fluid` is read-only and is not changed.
+
+    Parameters
+    ----------
+    G_mask : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at GAS cells.
+    I_mask : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at INTERFACE cells.
+    to_fluid : NDArray[np.bool_]
+        Two-dimensional numpy array of bools of shape (ny, nx).
+        `True` at cells that have undergone I->F transition.
+    gas_to_interface : NDArray[np.bool_] or None, optional.
+        Two-dimensional numpy array of bools into which to write
+        the cells that are converted from gas to interface.
+
+    Returns
+    -------
+    None
+    """
+    assert _check_subset(to_fluid, I_mask)
+    neighbour_transitioned = _check_neighbours_true(to_fluid)
+    if gas_to_interface is not None:
+        np.logical_and(G_mask, neighbour_transitioned, out=gas_to_interface)
+    else:
+        gas_to_interface = G_mask & neighbour_transitioned
+    G_mask[gas_to_interface] = False
+    I_mask[gas_to_interface] = True
 
 
 def _check_subset(subset: NDArray[np.bool_], full: NDArray[np.bool_]) -> bool:
