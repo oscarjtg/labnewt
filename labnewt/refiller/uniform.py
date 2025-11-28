@@ -46,4 +46,6 @@ class UniformRefiller(Refiller):
         model.r[needs_filling] = self.r
         model.u[needs_filling] = self.u
         model.v[needs_filling] = self.v
-        model.fi[:, needs_filling] = _feq2(self.r, self.u, self.v, model.stencil)
+        model.fi[:, needs_filling] = _feq2(
+            self.r, self.u, self.v, model.stencil
+        ).ravel()[:, np.newaxis]
