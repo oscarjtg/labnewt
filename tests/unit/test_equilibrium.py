@@ -5,6 +5,30 @@ from labnewt import MacroscopicGuo, MacroscopicStandard, Model, StencilD2Q9
 from labnewt._equilibrium import _feq2, _feq2_q
 
 
+def test_feq2_float_zero_velocity():
+    r = 1.0
+    u = 0.0
+    v = 0.0
+    s = StencilD2Q9()
+
+    computed = _feq2(r, u, v, s).ravel()
+    expected = r * s.w
+
+    assert np.allclose(computed, expected, rtol=1.0e-12)
+
+
+def test_feq2_q_float_zero_velocity():
+    r = 1.0
+    u = 0.0
+    v = 0.0
+    s = StencilD2Q9()
+
+    for q in range(s.nq):
+        computed = _feq2_q(q, r, u, v, s)
+        expected = r * s.w[q]
+        assert np.allclose(computed, expected, rtol=1.0e-12)
+
+
 def test_feq2_array_zero_velocity():
     shape = (2, 3)
     r = np.ones(shape)
