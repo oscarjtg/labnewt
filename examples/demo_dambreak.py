@@ -3,9 +3,9 @@
 import os
 
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import netCDF4 as nc
 import numpy as np
+from matplotlib.animation import FuncAnimation
 
 from labnewt import (
     BottomWallNoSlip,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     def update(i):
         mesh.set_array(ct[i, ...].ravel())
         ax.set_title(f"t = {t[i]:.2f}")
-        return mesh,
+        return (mesh,)
 
     anim_dir = "./examples/videos/"
     os.makedirs(anim_dir, exist_ok=True)
