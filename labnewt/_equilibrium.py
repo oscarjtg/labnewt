@@ -8,13 +8,16 @@ def _feq2(r, u, v, s):
     Parameters
     ----------
     r : np.ndarray or float
-        Two-dimensional array containing the fluid density.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains fluid density.
     u : np.ndarray or float
-        Two-dimensional array containing the x-component of the fluid velocity.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains x-component of fluid velocity.
     v : np.ndarray or float
-        Two-dimensional array containing the y-component of the fluid velocity.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains x-component of fluid velocity.
     s : Stencil
-        The lattice stencil.
+        Stencil object defining lattice velocities and weights in arrays of length nq.
 
     Returns
     -------
@@ -28,25 +31,30 @@ def _feq2(r, u, v, s):
 
 def _feq2_q(q, r, u, v, s):
     """
-    Compute the 2nd-order equilibrium distribution function.
+    Compute the 2nd-order equilibrium distribution function in lattice direction `q`.
 
     Parameters
     ----------
     q : int
-        Lattice vector index.
+        Integer lattice velocity index.
+        Require q < nq, where nq is the length of the arrays in stencil.
     r : np.ndarray or float
-        Two-dimensional array containing the fluid density.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains fluid density.
     u : np.ndarray or float
-        Two-dimensional array containing the x-component of the fluid velocity.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains x-component of fluid velocity.
     v : np.ndarray or float
-        Two-dimensional array containing the y-component of the fluid velocity.
+        Two-dimensional array of floats of shape (ny, nx), or float.
+        Contains x-component of fluid velocity.
     s : Stencil
-        The lattice stencil.
+        Stencil object defining lattice velocities and weights in arrays of length nq.
 
     Returns
     -------
-    np.ndarray
-        Three-dimensional array containing equilibrium distribution function values.
+    np.ndarray or float
+        Two-dimensional array of floats of shape (ny, nx), or float
+        giving equilibrium distribution function value(s) in lattice direction `q`.
     """
     cu = s.cx[q] * u + s.cy[q] * v
     uu = u**2 + v**2
