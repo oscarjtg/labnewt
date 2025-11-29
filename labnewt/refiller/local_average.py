@@ -4,8 +4,8 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.signal import convolve2d
 
-from .base import Refiller
 from .._equilibrium import _feq2_q
+from .base import Refiller
 
 
 class LocalAverageRefiller(Refiller):
