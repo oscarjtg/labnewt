@@ -229,6 +229,7 @@ class FreeSurfaceModel(Model):
         streamer=None,
         collider=None,
         macros=None,
+        refiller=None,
         quiet=True,
     ):
         super().__init__(
@@ -243,7 +244,7 @@ class FreeSurfaceModel(Model):
             macros=macros,
             quiet=quiet,
         )
-        self.vof = VolumeOfFluid(self.shape, self.stencil)
+        self.vof = VolumeOfFluid(self.shape, self.stencil, refiller=refiller)
         self.fsbc = FreeSurface(rho_G)
 
     def set_phi(self, source, *args):
