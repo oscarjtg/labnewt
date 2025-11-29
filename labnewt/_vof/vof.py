@@ -7,7 +7,6 @@ from ..refiller import UniformRefiller
 from ._convert_cells import _identify_overfull_, _identify_underfull_, convert_cells_
 from ._distribute_Mex import _distribute_Mex_
 from ._dMq import _compute_x_nq, _compute_y_nq, compute_dMq_
-from ._fill import _fill_
 from ._Mstar import _Mstar_inplace
 from ._normals import _normals_
 
