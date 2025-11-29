@@ -3,7 +3,8 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from ._convert_cells import _convert_cells_, _identify_overfull_, _identify_underfull_
+from ..refiller import UniformRefiller
+from ._convert_cells import _identify_overfull_, _identify_underfull_, convert_cells_
 from ._distribute_Mex import _distribute_Mex_
 from ._dMq import _compute_x_nq, _compute_y_nq, compute_dMq_
 from ._Mstar import _Mstar_inplace
@@ -11,7 +12,7 @@ from ._normals import _normals_
 
 
 class VolumeOfFluid:
-    def __init__(self, shape, stencil):
+    def __init__(self, shape, stencil, refiller=None):
         self.phi = np.zeros(shape, dtype=np.float64)
         self.M = np.zeros(shape, dtype=np.float64)
         self.norm_x = np.zeros(shape, dtype=np.float64)
@@ -21,6 +22,7 @@ class VolumeOfFluid:
         self.G_mask = np.zeros(shape, dtype=np.bool_)
         self.to_gas = np.zeros(shape, dtype=np.bool_)
         self.to_fluid = np.zeros(shape, dtype=np.bool_)
+        self.gas_to_interface = np.zeros(shape, dtype=np.bool_)
         self.dMq = np.zeros((stencil.nq, *shape), dtype=np.float64)
         self.x = np.arange(shape[1], dtype=int)
         self.y = np.arange(shape[0], dtype=int)
@@ -32,6 +34,8 @@ class VolumeOfFluid:
         self.x_nq.flags.writeable = False
         self.y_nq.flags.writeable = False
 
+        self.refiller = UniformRefiller(1.0, 0.0, 0.0) if refiller is None else refiller
+
     def initialise(self, model):
         """
         Sets `self.M`, `self.F_mask`, `self.I_mask`, and `self.G_mask`,
@@ -39,11 +43,11 @@ class VolumeOfFluid:
         """
         self._initialise(model.r)
 
-    def update(self, model, max_iter=5):
+    def update(self, model):
         """
         Updates `self.M`, `self.phi`, `self.F_mask`, `self.I_mask`, and `self.G_mask`.
         """
-        self._step(model.fi, model.fo, model.r, model.stencil, max_iter)
+        self._step(model.fi, model.fo, model.r, model.stencil, model)
 
     def _initialise(self, rho):
         self.M[:] = self.phi * rho
@@ -64,7 +68,7 @@ class VolumeOfFluid:
         # Update unit normal vectors.
         _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
 
-    def _step(self, fi, fo, rho, stencil, max_iter):
+    def _step(self, fi, fo, rho, stencil, model):
         # Compute mass exchange in each direction.
         compute_dMq_(
             self.dMq,
@@ -86,9 +90,7 @@ class VolumeOfFluid:
         _identify_overfull_(self.to_fluid, self.I_mask, self.M, rho)
 
         # Convert cell types.
-        _convert_cells_(
-            self.F_mask, self.I_mask, self.G_mask, self.to_fluid, self.to_gas
-        )
+        convert_cells_(self)
 
         # Redistribute excess mass.
         _distribute_Mex_(
@@ -98,6 +100,9 @@ class VolumeOfFluid:
         # Update phi and normals.
         np.divide(self.M, rho, out=self.phi)
         _normals_(self.norm_x, self.norm_y, self.phi, self.I_mask)
+
+        # Initialise newly-created INTERFACE cells that were previously GAS cells.
+        self.refiller.fill(model, self.gas_to_interface)
 
     def plot_fields(self, path=None):
         """

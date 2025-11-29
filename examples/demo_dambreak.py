@@ -9,8 +9,8 @@ from matplotlib.animation import FuncAnimation
 
 from labnewt import (
     BottomWallNoSlip,
-    ConstantGravityForce,
     FreeSurfaceModel,
+    GravityForce,
     NetCDFWriter,
     Simulation,
     TopWallNoSlip,
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     nu = 0.1  # kinematic viscosity
     dx = 1  # grid spacing
     dt = 1  # time step
-    tf = 5000.0  # end time
+    tf = 20000.0  # end time
     g = 0.0001  # gravitational acceleration
 
     model = FreeSurfaceModel(nx, ny, dx, dt, nu)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     phi[(X == x_left) & (Y <= y_upper)] = 0.5
     phi[(X == x_right) & (Y <= y_upper)] = 0.5
     model.set_phi(phi)
-    gravity = ConstantGravityForce(dx, dt, g)
+    gravity = GravityForce(dx, dt, g)
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
     model.add_boundary_condition(TopWallNoSlip())
