@@ -21,7 +21,14 @@ class LocalAverageRefiller(Refiller):
 
     def fill(self, model, needs_filling: NDArray[np.bool_]):
         """
-        Fills `model.fi` at `needs_filling` with average of GAS neighbours.
+        Fills `model.fi` at `needs_filling` with average of FLUID neighbours.
+
+        Average is computed as the mean of all the FLUID neighbours
+        within a pad distance of `self.pad`.
+
+        If no FLUID cell neighbours are found, the cell is refilled with
+        the equilibrium distribution values for density `self.r`
+        and velocity components (`self.u`, `self.v`), as in UniformRefiller.
 
         Modifies `model.fi` in-place. `needs_filling` is read-only and is not changed.
 
