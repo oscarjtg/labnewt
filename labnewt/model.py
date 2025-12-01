@@ -8,25 +8,55 @@ from ._vof import VolumeOfFluid
 from .boundary import FreeSurface
 from .collider import ColliderSRT
 from .force import Force
-from .macroscopic import MacroscopicStandard
-from .stencil import StencilD2Q9
+from .macroscopic import Macroscopic, MacroscopicStandard
+from .stencil import Stencil, StencilD2Q9
 from .streamer import Streamer
 
 
 class Model:
     def __init__(
         self,
-        nx,
-        ny,
-        dx,
-        dt,
-        nu,
-        stencil=None,
-        streamer=None,
-        collider=None,
-        macros=None,
+        nx: int,
+        ny: int,
+        dx: float,
+        dt: float,
+        nu: float,
+        stencil: Stencil = None,
+        streamer: Streamer = None,
+        collider: Collider = None,
+        macros: Macroscopic = None,
         quiet=True,
     ):
+        """
+        Model constructor.
+
+        Parameters
+        ----------
+        nx : int
+            Integer number of grid cells in the x direction.
+        ny : int
+            Integer number of grid cells in the y direction.
+        dx : float
+            Grid spacing between cells (grid cells are uniform squares).
+        dt : float
+            Time step.
+        nu : float
+            Kinematic viscosity of the fluid.
+        stencil : Stencil
+            Lattice Stencil object.
+        streamer : Streamer
+            Streamer object, which performs the lattice Boltzmann streaming step.
+        collider : Collider
+            Collider object, which performs the lattice Boltzmann collision step.
+        macros : Macroscopic
+            Macroscopic object, which contains methods for computing fluid properties.
+        quiet : bool
+            If `False`, print progress while model runs. Otherwise, don't.
+
+        Returns
+        -------
+        None
+        """
         self.stencil = StencilD2Q9() if stencil is None else stencil
         self.streamer = Streamer() if streamer is None else streamer
         self.collider = ColliderSRT(nu, dx, dt) if collider is None else collider
