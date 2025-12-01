@@ -6,7 +6,7 @@ import numpy as np
 from ._equilibrium import _feq2
 from ._vof import VolumeOfFluid
 from .boundary import FreeSurface
-from .collider import ColliderSRT
+from .collider import Collider, ColliderSRT
 from .force import Force
 from .macroscopic import Macroscopic, MacroscopicStandard
 from .stencil import Stencil, StencilD2Q9
