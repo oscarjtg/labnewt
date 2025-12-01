@@ -47,7 +47,7 @@ class Simulation:
         # Initialise model, and time it.
         start0 = time.perf_counter()
         if not self.model.initialised:
-            self.model._initialise()
+            self.model.initialise()
 
         # Run callbacks
         for cb in self.callbacks.values():

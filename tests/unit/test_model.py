@@ -91,7 +91,7 @@ def test_model_quiescent(Macroscopic):
     model.set_r(np.ones(shape))
     model.set_u(np.zeros(shape))
     model.set_v(np.zeros(shape))
-    model._initialise()
+    model.initialise()
 
     # Check after one timestep.
     model.step()

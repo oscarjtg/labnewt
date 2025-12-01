@@ -35,7 +35,7 @@ if __name__ == "__main__":
     model.add_forcing(gravity)
     model.add_boundary_condition(BottomWallNoSlip())
     model.add_boundary_condition(TopWallNoSlip())
-    model._initialise()
+    model.initialise()
     model.print_means()
     model.plot_fields()
     plt.show()

@@ -242,7 +242,7 @@ class Model:
         """Initialise self.f with 2nd order equilibrium distribution."""
         self.fi = _feq2(self.r, self.u, self.v, self.stencil)
 
-    def _initialise(self):
+    def initialise(self):
         """Initialise model."""
         self._initialise_feq2()
         self.clock = 0.0
@@ -428,7 +428,7 @@ class FreeSurfaceModel(Model):
         print(f"% of INTERFACE cells  = {np.mean(self.vof.I_mask)*100:.4f}")
         print(f"% of GAS cells        = {np.mean(self.vof.G_mask)*100:.4f}")
 
-    def _initialise(self, do_mei=False):
+    def initialise(self, do_mei=False):
         """Initialise model."""
         self._initialise_feq2()
         self.vof.initialise(self)
