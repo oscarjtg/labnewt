@@ -100,19 +100,45 @@ class Model:
             print(f"nu       = {self.nu}")
             print(f"tau_star = {1 / self.collider.omega:.3f}")
 
-    def _set(self, data, source, *args):
+    def add_boundary_condition(self, bc: BoundaryCondition):
         """
-        Set `data` array to `source` values.
+        Add boundary condition `bc` to model.
 
-        Array `data` is modified in-place.
+        Parameters
+        ----------
+        bc : BoundaryCondition
+            BoundaryCondition object which is to be added to the model.
+
+        Returns
+        -------
+        None
+        """
+        self.boundary_conditions.append(bc)
+
+    def add_forcing(self, force: Force):
+        """
+        Add force term `force` to model.
+
+        Parameters
+        ----------
+        force : Force
+            Force object which is to be added to model.
+
+        Returns
+        -------
+        None
+        """
+        self.forcings.append(force)
+
+    def set_r(self, source, *args):
+        """
+        Set `self.r` (fluid density) array values.
 
         - If `source` is callable, it must have signature (x, y, *args).
         - If `source` is an array, it must have the same shape as `data`.
 
         Parameters
         ----------
-        data : np.ndarray
-            Array to be filled
         source : callable or np.ndarray
             Callable or array to use to fill `data`
         *args : Any, optional
@@ -122,12 +148,7 @@ class Model:
         -------
         None
         """
-        if callable(source):
-            X, Y = np.meshgrid(self.x, self.y)
-            data[:] = source(X, Y, *args)
-        else:
-            assert data.shape == source.shape
-            data[:] = source
+        self._set(self.r, source, *args)
 
     def set_u(self, source, *args):
         """
@@ -169,48 +190,15 @@ class Model:
         """
         self._set(self.v, source, *args)
 
-    def set_r(self, source, *args):
+    def initialise(self):
         """
-        Set `self.r` (fluid density) array values.
+        Initialise model.
 
-        - If `source` is callable, it must have signature (x, y, *args).
-        - If `source` is an array, it must have the same shape as `data`.
-
-        Parameters
-        ----------
-        source : callable or np.ndarray
-            Callable or array to use to fill `data`
-        *args : Any, optional
-            Optional arguments for source if it is callable
-
-        Returns
-        -------
-        None
+        Modifies `self.fi`, `self.clock`, and `self.initialised`.
         """
-        self._set(self.r, source, *args)
-
-    def _set_f(self, source, *args):
-        """
-        Set `self.fi` and `self.fo` (incoming and outgoing distribution) array values.
-
-        This is a convenience method for unit tests. Should not be used otherwise.
-
-        - If `source` is callable, it must have signature (x, y, *args).
-        - If `source` is an array, it must have shape (nq, ny, nx).
-
-        Parameters
-        ----------
-        source : callable or np.ndarray
-            Callable or array to use to fill `data`
-        *args : Any, optional
-            Optional arguments for source if it is callable
-
-        Returns
-        -------
-        None
-        """
-        self._set(self.fi, source, *args)
-        self._set(self.fo, source, *args)
+        self._initialise_feq2()
+        self.clock = 0.0
+        self.initialised = True
 
     def step(self):
         """
@@ -247,50 +235,6 @@ class Model:
 
         # Update time
         self.clock += self.dt
-
-    def _initialise_feq2(self):
-        """Initialise `self.fi` with 2nd order equilibrium distribution."""
-        self.fi = _feq2(self.r, self.u, self.v, self.stencil)
-
-    def initialise(self):
-        """
-        Initialise model.
-
-        Modifies `self.fi`, `self.clock`, and `self.initialised`.
-        """
-        self._initialise_feq2()
-        self.clock = 0.0
-        self.initialised = True
-
-    def add_boundary_condition(self, bc: BoundaryCondition):
-        """
-        Add boundary condition `bc` to model.
-
-        Parameters
-        ----------
-        bc : BoundaryCondition
-            BoundaryCondition object which is to be added to the model.
-
-        Returns
-        -------
-        None
-        """
-        self.boundary_conditions.append(bc)
-
-    def add_forcing(self, force: Force):
-        """
-        Add force term `force` to model.
-
-        Parameters
-        ----------
-        force : Force
-            Force object which is to be added to model.
-
-        Returns
-        -------
-        None
-        """
-        self.forcings.append(force)
 
     def plot_fields(self, path=None):
         """
@@ -344,6 +288,62 @@ class Model:
         if path is not None:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             plt.savefig(path)
+
+    def _set_f(self, source, *args):
+        """
+        Set `self.fi` and `self.fo` (incoming and outgoing distribution) array values.
+
+        This is a convenience method for unit tests. Should not be used otherwise.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have shape (nq, ny, nx).
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
+        """
+        self._set(self.fi, source, *args)
+        self._set(self.fo, source, *args)
+
+    def _set(self, data, source, *args):
+        """
+        Set `data` array to `source` values.
+
+        Array `data` is modified in-place.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Array to be filled
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
+        """
+        if callable(source):
+            X, Y = np.meshgrid(self.x, self.y)
+            data[:] = source(X, Y, *args)
+        else:
+            assert data.shape == source.shape
+            data[:] = source
+
+    def _initialise_feq2(self):
+        """Initialise `self.fi` with 2nd order equilibrium distribution."""
+        self.fi = _feq2(self.r, self.u, self.v, self.stencil)
 
 
 class FreeSurfaceModel(Model):
@@ -435,38 +435,6 @@ class FreeSurfaceModel(Model):
         None
         """
         self._set(self.vof.phi, source, *args)
-
-    def _phi_from_eta(self, eta_array, interface_width=0.9):
-        """
-        Compute fill fraction array `phi_array` from elevation values in `eta_array`
-
-        Parameters
-        ----------
-        eta_array : np.ndarray
-            One-dimensional numpy array of floats of shape (nx,).
-            Contains surface elevation at each grid column.
-            Assumes eta is continuous and injective (one-one).
-        interface_width : float
-            Half-width of interface, in lattice units.
-
-        Returns
-        -------
-        phi_array : np.ndarray
-            Two dimensional numpy array of floats of shape (ny, nx).
-        """
-        delta = interface_width * self.dx
-        X, Y = np.meshgrid(self.x, self.y)
-        eta_array_2d = eta_array[None, :] * np.ones(Y.shape)
-        phi_array = np.empty_like(X)
-        mask_fluid = Y <= eta_array[None, :] - delta
-        mask_air = Y >= eta_array[None, :] + delta
-        mask_interface = ~mask_fluid * ~mask_air
-        phi_array[mask_fluid] = 1.0
-        phi_array[mask_air] = 0.0
-        phi_array[mask_interface] = (
-            eta_array_2d[mask_interface] - Y[mask_interface] + delta
-        ) / (2 * delta)
-        return phi_array
 
     def set_phi_from_eta(self, eta_source, *args):
         """
@@ -712,3 +680,35 @@ class FreeSurfaceModel(Model):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             plt.savefig(path)
             plt.close()
+
+    def _phi_from_eta(self, eta_array, interface_width=0.9):
+        """
+        Compute fill fraction array `phi_array` from elevation values in `eta_array`
+
+        Parameters
+        ----------
+        eta_array : np.ndarray
+            One-dimensional numpy array of floats of shape (nx,).
+            Contains surface elevation at each grid column.
+            Assumes eta is continuous and injective (one-one).
+        interface_width : float
+            Half-width of interface, in lattice units.
+
+        Returns
+        -------
+        phi_array : np.ndarray
+            Two dimensional numpy array of floats of shape (ny, nx).
+        """
+        delta = interface_width * self.dx
+        X, Y = np.meshgrid(self.x, self.y)
+        eta_array_2d = eta_array[None, :] * np.ones(Y.shape)
+        phi_array = np.empty_like(X)
+        mask_fluid = Y <= eta_array[None, :] - delta
+        mask_air = Y >= eta_array[None, :] + delta
+        mask_interface = ~mask_fluid * ~mask_air
+        phi_array[mask_fluid] = 1.0
+        phi_array[mask_air] = 0.0
+        phi_array[mask_interface] = (
+            eta_array_2d[mask_interface] - Y[mask_interface] + delta
+        ) / (2 * delta)
+        return phi_array
