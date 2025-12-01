@@ -1,7 +1,12 @@
 from ._equilibrium import _feq2
 
 
-class ColliderSRT:
+class Collider:
+    def collide(self, model):
+        raise NotImplementedError
+
+
+class ColliderSRT(Collider):
     def __init__(self, nu, dx, dt):
         tau_star = 0.5 + 3.0 * dt * nu / (dx**2)
         self.omega = 1.0 / tau_star

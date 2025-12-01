@@ -1,6 +1,15 @@
 import numpy as np
+import pytest
 
 from labnewt import ColliderSRT, Model, StencilD2Q9
+from labnewt.collider import Collider
+
+
+def test_collider_base_collide():
+    collider = Collider()
+    model = Model(2, 2, 1.0, 1.0, 0.1)
+    with pytest.raises(NotImplementedError):
+        collider.collide(model)
 
 
 def test_collider_srt_unit_omega():
