@@ -207,7 +207,7 @@ class Model:
         self._set(self.fi, source, *args)
         self._set(self.fo, source, *args)
 
-    def _step(self):
+    def step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
         self.macros.velocity_x_coll(self)
@@ -475,7 +475,7 @@ class FreeSurfaceModel(Model):
         self.initialised = True
         return number_of_iterations
 
-    def _step(self):
+    def step(self):
         """Perform one time step of lattice Boltzmann algorithm."""
         # Collision step
         self.macros.velocity_x_coll(self)

@@ -61,7 +61,7 @@ class Simulation:
 
         # Run first time step of model, and time it.
         start1 = time.perf_counter()
-        self.model._step()
+        self.model.step()
         self.clock += self.model.dt
         self.timestep += 1
 
@@ -87,7 +87,7 @@ class Simulation:
         start2 = time.perf_counter()
         start = time.perf_counter()
         while self.clock < self.stop_time:
-            self.model._step()
+            self.model.step()
             self.clock += self.model.dt
             self.timestep += 1
 

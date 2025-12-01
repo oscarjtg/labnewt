@@ -94,14 +94,14 @@ def test_model_quiescent(Macroscopic):
     model._initialise()
 
     # Check after one timestep.
-    model._step()
+    model.step()
     assert np.allclose(model.r, np.ones(shape), atol=1.0e-12)
     assert np.allclose(model.u, np.zeros(shape), atol=1.0e-12)
     assert np.allclose(model.v, np.zeros(shape), atol=1.0e-12)
 
     # Check again after 100 timesteps.
     for _ in range(100):
-        model._step()
+        model.step()
     assert np.allclose(model.r, np.ones(shape), atol=1.0e-12)
     assert np.allclose(model.u, np.zeros(shape), atol=1.0e-12)
     assert np.allclose(model.v, np.zeros(shape), atol=1.0e-12)
