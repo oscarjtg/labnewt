@@ -15,6 +15,70 @@ from .streamer import Streamer
 
 
 class Model:
+    """
+    Single-phase lattice Boltzmann model, solved on a uniform rectangular grid.
+
+    Attributes
+    ----------
+    stencil : Stencil
+    streamer : Streamer
+    collider : Collider
+    macros : Macroscopic
+    nx : int
+        Integer number of grid cells in x direction.
+    ny : int
+        Integer number of grid cells in y direction.
+    dx : float
+        Grid spacing, in metres (square grid).
+    dt : float
+        Time step, in seconds.
+    nu : float
+        Kinematic viscosity, in m^2/s.
+    clock : float
+        Model time, in seconds.
+    x : ndarray
+        One-dimensional numpy array of floats of shape (`nx`,).
+        Contains x-coordinates of cell centres, in metres.
+    y : ndarray
+        One-dimensional numpy array of floats of shape (`ny`,).
+        Contains y-coordinates of cell centres, in metres.
+    shape : tuple of ints
+        Tuple of integers (`ny`, `nx`).
+    u : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-component of velocity at each cell centre, in lattice units.
+    v : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-component of velocity at each cell centre, in lattice units.
+    r : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains fluid density at each cell centre, in lattice units.
+    fi : ndarray
+        Three-dimensional numpy array of floats of shape (`stencil.nq`, `ny`, `nx`).
+        Contains incoming distribution functions, in lattice units.
+    fo : ndarray
+        Three-dimensional numpy array of floats of shape (`stencil.nq`, `ny`, `nx`).
+        Contains outgoing distribution functions, in lattice units.
+    Fx : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-components of body force on fluid at cell centres, in lattice units.
+    Fy : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-components of body force on fluid at cell centres, in lattice units.
+    uc : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-components of velocity for model collision step, in lattice units.
+    vc : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-components of velocity for model collision step, in lattice units.
+    boundary_conditions : list[BoundaryCondition]
+        List of BoundaryCondition objects. These are all called during model `step()`.
+    forcings : list[Force]
+        List of Force objects. These are all called during model `step()`.
+    initialised : bool
+        Boolean flag that tracks whether model has been initialised.
+    """
+
     def __init__(
         self,
         nx: int,
@@ -204,8 +268,9 @@ class Model:
         """
         Perform one time step of lattice Boltzmann algorithm.
 
-        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, `self.uc`,
-        `self.vc`, `self.clock`, and `Force` and `BoundaryCondition` internals.
+        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, 
+        `self.Fx`, `self.Fy`, `self.uc`, `self.vc`, and `self.clock`.
+        `Force` and `BoundaryCondition` internals may also change.
         """
         # Collision step
         self.macros.velocity_x_coll(self)
@@ -347,6 +412,73 @@ class Model:
 
 
 class FreeSurfaceModel(Model):
+    """
+    Two-phase lattice Boltzmann model, solved on a uniform rectangular grid.
+
+    Attributes
+    ----------
+    stencil : Stencil
+    streamer : Streamer
+    collider : Collider
+    macros : Macroscopic
+    refiller : Refiller
+    nx : int
+        Integer number of grid cells in x direction.
+    ny : int
+        Integer number of grid cells in y direction.
+    dx : float
+        Grid spacing, in metres (square grid).
+    dt : float
+        Time step, in seconds.
+    nu : float
+        Kinematic viscosity, in m^2/s.
+    rho_G : float
+        Gas density, in lattice units.
+    clock : float
+        Model time, in seconds.
+    x : ndarray
+        One-dimensional numpy array of floats of shape (`nx`,).
+        Contains x-coordinates of cell centres, in metres.
+    y : ndarray
+        One-dimensional numpy array of floats of shape (`ny`,).
+        Contains y-coordinates of cell centres, in metres.
+    shape : tuple of ints
+        Tuple of integers (`ny`, `nx`).
+    u : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-component of velocity at each cell centre, in lattice units.
+    v : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-component of velocity at each cell centre, in lattice units.
+    r : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains fluid density at each cell centre, in lattice units.
+    fi : ndarray
+        Three-dimensional numpy array of floats of shape (`stencil.nq`, `ny`, `nx`).
+        Contains incoming distribution functions, in lattice units.
+    fo : ndarray
+        Three-dimensional numpy array of floats of shape (`stencil.nq`, `ny`, `nx`).
+        Contains outgoing distribution functions, in lattice units.
+    Fx : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-components of body force on fluid at cell centres, in lattice units.
+    Fy : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-components of body force on fluid at cell centres, in lattice units.
+    uc : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains x-components of velocity for model collision step, in lattice units.
+    vc : ndarray
+        Two-dimensional numpy array of floats of shape (`ny`, `nx`).
+        Contains y-components of velocity for model collision step, in lattice units.
+    boundary_conditions : list[BoundaryCondition]
+        List of BoundaryCondition objects. These are all called during model `step()`.
+    forcings : list[Force]
+        List of Force objects. These are all called during model `step()`.
+    initialised : bool
+        Boolean flag that tracks whether model has been initialised.
+    """
+
     def __init__(
         self,
         nx: int,
@@ -548,7 +680,14 @@ class FreeSurfaceModel(Model):
         return number_of_iterations
 
     def step(self):
-        """Perform one time step of lattice Boltzmann algorithm."""
+        """
+        Perform one time step of the two-phase lattice Boltzmann algorithm.
+
+        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, 
+        `self.vof.phi`, `self.vof.M`, `self.vof.F_mask`, `self.vof.I_mask`,
+        `self.vof.G_mask`, `self.Fx`, `self.Fy`, `self.uc`, `self.vc` and `self.clock`.
+        `Force` and `BoundaryCondition` internals may also change.
+        """
         # Collision step
         self.macros.velocity_x_coll(self)
         self.macros.velocity_y_coll(self)
