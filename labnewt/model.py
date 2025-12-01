@@ -254,6 +254,35 @@ class Model:
         """
         self._set(self.v, source, *args)
 
+    def _set(self, data, source, *args):
+        """
+        Set `data` array to `source` values.
+
+        Array `data` is modified in-place.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Array to be filled
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
+        """
+        if callable(source):
+            X, Y = np.meshgrid(self.x, self.y)
+            data[:] = source(X, Y, *args)
+        else:
+            assert data.shape == source.shape
+            data[:] = source
+
     def initialise(self):
         """
         Initialise model.
@@ -264,11 +293,15 @@ class Model:
         self.clock = 0.0
         self.initialised = True
 
+    def _initialise_feq2(self):
+        """Initialise `self.fi` with 2nd order equilibrium distribution."""
+        self.fi = _feq2(self.r, self.u, self.v, self.stencil)
+
     def step(self):
         """
         Perform one time step of lattice Boltzmann algorithm.
 
-        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, 
+        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`,
         `self.Fx`, `self.Fy`, `self.uc`, `self.vc`, and `self.clock`.
         `Force` and `BoundaryCondition` internals may also change.
         """
@@ -376,39 +409,6 @@ class Model:
         """
         self._set(self.fi, source, *args)
         self._set(self.fo, source, *args)
-
-    def _set(self, data, source, *args):
-        """
-        Set `data` array to `source` values.
-
-        Array `data` is modified in-place.
-
-        - If `source` is callable, it must have signature (x, y, *args).
-        - If `source` is an array, it must have the same shape as `data`.
-
-        Parameters
-        ----------
-        data : np.ndarray
-            Array to be filled
-        source : callable or np.ndarray
-            Callable or array to use to fill `data`
-        *args : Any, optional
-            Optional arguments for source if it is callable
-
-        Returns
-        -------
-        None
-        """
-        if callable(source):
-            X, Y = np.meshgrid(self.x, self.y)
-            data[:] = source(X, Y, *args)
-        else:
-            assert data.shape == source.shape
-            data[:] = source
-
-    def _initialise_feq2(self):
-        """Initialise `self.fi` with 2nd order equilibrium distribution."""
-        self.fi = _feq2(self.r, self.u, self.v, self.stencil)
 
 
 class FreeSurfaceModel(Model):
@@ -596,6 +596,38 @@ class FreeSurfaceModel(Model):
             eta[:] = eta_source
         self.vof.phi = self._phi_from_eta(eta)
 
+    def _phi_from_eta(self, eta_array, interface_width=0.9):
+        """
+        Compute fill fraction array `phi_array` from elevation values in `eta_array`
+
+        Parameters
+        ----------
+        eta_array : np.ndarray
+            One-dimensional numpy array of floats of shape (nx,).
+            Contains surface elevation at each grid column.
+            Assumes eta is continuous and injective (one-one).
+        interface_width : float
+            Half-width of interface, in lattice units.
+
+        Returns
+        -------
+        phi_array : np.ndarray
+            Two dimensional numpy array of floats of shape (ny, nx).
+        """
+        delta = interface_width * self.dx
+        X, Y = np.meshgrid(self.x, self.y)
+        eta_array_2d = eta_array[None, :] * np.ones(Y.shape)
+        phi_array = np.empty_like(X)
+        mask_fluid = Y <= eta_array[None, :] - delta
+        mask_air = Y >= eta_array[None, :] + delta
+        mask_interface = ~mask_fluid * ~mask_air
+        phi_array[mask_fluid] = 1.0
+        phi_array[mask_air] = 0.0
+        phi_array[mask_interface] = (
+            eta_array_2d[mask_interface] - Y[mask_interface] + delta
+        ) / (2 * delta)
+        return phi_array
+
     def print_integrals(self):
         """Print fluid properties summed over the entire grid."""
         print(f"sum_(y,x) density[y, x]    = {np.sum(self.r):.3f}")
@@ -683,7 +715,7 @@ class FreeSurfaceModel(Model):
         """
         Perform one time step of the two-phase lattice Boltzmann algorithm.
 
-        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, 
+        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`,
         `self.vof.phi`, `self.vof.M`, `self.vof.F_mask`, `self.vof.I_mask`,
         `self.vof.G_mask`, `self.Fx`, `self.Fy`, `self.uc`, `self.vc` and `self.clock`.
         `Force` and `BoundaryCondition` internals may also change.
@@ -819,35 +851,3 @@ class FreeSurfaceModel(Model):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             plt.savefig(path)
             plt.close()
-
-    def _phi_from_eta(self, eta_array, interface_width=0.9):
-        """
-        Compute fill fraction array `phi_array` from elevation values in `eta_array`
-
-        Parameters
-        ----------
-        eta_array : np.ndarray
-            One-dimensional numpy array of floats of shape (nx,).
-            Contains surface elevation at each grid column.
-            Assumes eta is continuous and injective (one-one).
-        interface_width : float
-            Half-width of interface, in lattice units.
-
-        Returns
-        -------
-        phi_array : np.ndarray
-            Two dimensional numpy array of floats of shape (ny, nx).
-        """
-        delta = interface_width * self.dx
-        X, Y = np.meshgrid(self.x, self.y)
-        eta_array_2d = eta_array[None, :] * np.ones(Y.shape)
-        phi_array = np.empty_like(X)
-        mask_fluid = Y <= eta_array[None, :] - delta
-        mask_air = Y >= eta_array[None, :] + delta
-        mask_interface = ~mask_fluid * ~mask_air
-        phi_array[mask_fluid] = 1.0
-        phi_array[mask_air] = 0.0
-        phi_array[mask_interface] = (
-            eta_array_2d[mask_interface] - Y[mask_interface] + delta
-        ) / (2 * delta)
-        return phi_array
