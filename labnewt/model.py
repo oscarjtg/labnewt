@@ -5,10 +5,11 @@ import numpy as np
 
 from ._equilibrium import _feq2
 from ._vof import VolumeOfFluid
-from .boundary import FreeSurface
+from .boundary import BoundaryCondition, FreeSurface
 from .collider import Collider, ColliderSRT
 from .force import Force
 from .macroscopic import Macroscopic, MacroscopicStandard
+from .refiller.base import Refiller
 from .stencil import Stencil, StencilD2Q9
 from .streamer import Streamer
 
@@ -28,7 +29,7 @@ class Model:
         quiet=True,
     ):
         """
-        Model constructor.
+        Construct `Model` object.
 
         Parameters
         ----------
@@ -42,16 +43,20 @@ class Model:
             Time step.
         nu : float
             Kinematic viscosity of the fluid.
-        stencil : Stencil
-            Lattice Stencil object.
-        streamer : Streamer
+        stencil : Stencil, optional
+            Lattice Stencil object. Default is `StencilD2Q9`
+        streamer : Streamer, optional
             Streamer object, which performs the lattice Boltzmann streaming step.
-        collider : Collider
+            Default is `Streamer`
+        collider : Collider, optional
             Collider object, which performs the lattice Boltzmann collision step.
-        macros : Macroscopic
+            Default is `ColliderSRT`
+        macros : Macroscopic, optional
             Macroscopic object, which contains methods for computing fluid properties.
-        quiet : bool
+            Default is `MacroscopicStandard`
+        quiet : bool, optional
             If `False`, print progress while model runs. Otherwise, don't.
+            Default is `True`
 
         Returns
         -------
@@ -97,7 +102,7 @@ class Model:
 
     def _set(self, data, source, *args):
         """
-        Sets `data` to `source` values.
+        Set `data` array to `source` values.
 
         Array `data` is modified in-place.
 
@@ -208,7 +213,12 @@ class Model:
         self._set(self.fo, source, *args)
 
     def step(self):
-        """Perform one time step of lattice Boltzmann algorithm."""
+        """
+        Perform one time step of lattice Boltzmann algorithm.
+
+        Updates `self.fi`, `self.fo`, `self.r`, `self.u`, `self.v`, `self.uc`,
+        `self.vc`, `self.clock`, and `Force` and `BoundaryCondition` internals.
+        """
         # Collision step
         self.macros.velocity_x_coll(self)
         self.macros.velocity_y_coll(self)
@@ -239,26 +249,53 @@ class Model:
         self.clock += self.dt
 
     def _initialise_feq2(self):
-        """Initialise self.f with 2nd order equilibrium distribution."""
+        """Initialise `self.fi` with 2nd order equilibrium distribution."""
         self.fi = _feq2(self.r, self.u, self.v, self.stencil)
 
     def initialise(self):
-        """Initialise model."""
+        """
+        Initialise model.
+
+        Modifies `self.fi`, `self.clock`, and `self.initialised`.
+        """
         self._initialise_feq2()
         self.clock = 0.0
         self.initialised = True
 
-    def add_boundary_condition(self, bc):
-        """Adds bc to self.boundary_conditions list."""
+    def add_boundary_condition(self, bc: BoundaryCondition):
+        """
+        Add boundary condition `bc` to model.
+
+        Parameters
+        ----------
+        bc : BoundaryCondition
+            BoundaryCondition object which is to be added to the model.
+
+        Returns
+        -------
+        None
+        """
         self.boundary_conditions.append(bc)
 
     def add_forcing(self, force: Force):
-        """Adds force to self.forcings list."""
+        """
+        Add force term `force` to model.
+
+        Parameters
+        ----------
+        force : Force
+            Force object which is to be added to model.
+
+        Returns
+        -------
+        None
+        """
         self.forcings.append(force)
 
     def plot_fields(self, path=None):
         """
-        Plots heatmaps of `self.r`, `self.u`, and `self.v` arrays.
+        Plot heatmaps of `self.r`, `self.u`, and `self.v` arrays.
+
         Saves plot if a `path` is given.
         The plot can be displayed by calling `plt.show()`.
 
@@ -312,19 +349,58 @@ class Model:
 class FreeSurfaceModel(Model):
     def __init__(
         self,
-        nx,
-        ny,
-        dx,
-        dt,
-        nu,
-        rho_G=1.0,
-        stencil=None,
-        streamer=None,
-        collider=None,
-        macros=None,
-        refiller=None,
-        quiet=True,
+        nx: int,
+        ny: int,
+        dx: float,
+        dt: float,
+        nu: float,
+        rho_G: float = 1.0,
+        stencil: Stencil = None,
+        streamer: Streamer = None,
+        collider: Collider = None,
+        macros: Macroscopic = None,
+        refiller: Refiller = None,
+        quiet: bool = True,
     ):
+        """
+        Construct `FreeSurfaceModel` object.
+
+        Parameters
+        ----------
+        nx : int
+            Integer number of grid cells in the x direction.
+        ny : int
+            Integer number of grid cells in the y direction.
+        dx : float
+            Grid spacing between cells (grid cells are uniform squares).
+        dt : float
+            Time step.
+        nu : float
+            Kinematic viscosity of the fluid.
+        rho_G : float, optional.
+            Gas density, in lattice units. Default = 1.0
+        stencil : Stencil, optional
+            Lattice Stencil object. Default is `StencilD2Q9`
+        streamer : Streamer, optional
+            Streamer object, which performs the lattice Boltzmann streaming step.
+            Default is `Streamer`
+        collider : Collider, optional
+            Collider object, which performs the lattice Boltzmann collision step.
+            Default is `ColliderSRT`
+        macros : Macroscopic, optional
+            Macroscopic object, which contains methods for computing fluid properties.
+            Default is `MacroscopicStandard`
+        refiller : Refiller, optional
+            Refiller objects, which provides the refilling scheme for `VolumeOfFluid`.
+            Default is `UniformRefiller(1.0, 0.0, 0.0)`
+        quiet : bool, optional
+            If `False`, print progress while model runs. Otherwise, don't.
+            Default is `True`
+
+        Returns
+        -------
+        None
+        """
         super().__init__(
             nx,
             ny,
@@ -342,29 +418,41 @@ class FreeSurfaceModel(Model):
 
     def set_phi(self, source, *args):
         """
-        Set fluid fraction values, phi.
+        Set `self.vof.phi` (cell fluid fraction) array values.
 
-        If source is an array, set phi to array values.
-        If source is a function with signature (x, y, *args),
-        set phi to values evaluated by the function.
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         self._set(self.vof.phi, source, *args)
 
     def _phi_from_eta(self, eta_array, interface_width=0.9):
         """
-        Set fill fraction `self.phi` from elevation values in `eta_array`.
+        Compute fill fraction array `phi_array` from elevation values in `eta_array`
 
         Parameters
         ----------
         eta_array : np.ndarray
-            One-dimensional numpy array of floats containing eta[x].
+            One-dimensional numpy array of floats of shape (nx,).
+            Contains surface elevation at each grid column.
+            Assumes eta is continuous and injective (one-one).
         interface_width : float
-            Interface half-width, in lattice units.
+            Half-width of interface, in lattice units.
 
         Returns
         -------
         phi_array : np.ndarray
-            Two dimensional numpy array of floats containing phi[y, x].
+            Two dimensional numpy array of floats of shape (ny, nx).
         """
         delta = interface_width * self.dx
         X, Y = np.meshgrid(self.x, self.y)
@@ -382,15 +470,15 @@ class FreeSurfaceModel(Model):
 
     def set_phi_from_eta(self, eta_source, *args):
         """
-        Set fill fraction `self.phi` from surface elevation `eta_source`.
+        Set fill fraction `self.vof.phi` from surface elevation `eta_source`.
 
-        Modifies `self.phi`.
+        Modifies `self.vof.phi`.
 
         Parameters
         ----------
         eta_source : callable or array
             Function with signature (x, *args) that generates surface elevations
-            at y = y(x) = eta(x, *args),
+            at `y = y(x) = eta(x, *args)`,
             or an array with these values pre-computed.
 
         *args : any
@@ -409,6 +497,7 @@ class FreeSurfaceModel(Model):
         self.vof.phi = self._phi_from_eta(eta)
 
     def print_integrals(self):
+        """Print fluid properties summed over the entire grid."""
         print(f"sum_(y,x) density[y, x]    = {np.sum(self.r):.3f}")
         print(f"sum_(y,x) velocity_X[y, x] = {np.sum(self.u):.3f}")
         print(f"sum_(y,x) velocity_Y[y, x] = {np.sum(self.v):.3f}")
@@ -419,6 +508,7 @@ class FreeSurfaceModel(Model):
         print(f"# of GAS cells             = {np.sum(self.vof.G_mask)}")
 
     def print_means(self):
+        """Print mean (average) fluid properties."""
         print(f"mean density[y, x]    = {np.mean(self.r):.6f}")
         print(f"mean velocity_X[y, x] = {np.mean(self.u):.6f}")
         print(f"mean velocity_Y[y, x] = {np.mean(self.v):.6f}")
@@ -428,13 +518,27 @@ class FreeSurfaceModel(Model):
         print(f"% of INTERFACE cells  = {np.mean(self.vof.I_mask)*100:.4f}")
         print(f"% of GAS cells        = {np.mean(self.vof.G_mask)*100:.4f}")
 
-    def initialise(self, do_mei=False):
-        """Initialise model."""
+    def initialise(self, do_mei: bool = False):
+        """
+        Initialise model.
+
+        Modifies `self.fi`, `self.vof.M`, `self.vof.F_mask`, `self.vof.I_mask`,
+        `self.vof.G_mask`, `self.clock`, and `self.initialised`
+
+        Parameters
+        ----------
+        do_mei : bool, optional
+            If `True`, do Mei's iterative initialisation method (untested).
+            Default is `False`
+
+        Returns
+        -------
+        None
+        """
         self._initialise_feq2()
         self.vof.initialise(self)
 
-        # Mei's method: timestep but without evolving velocity
-        # until fi stabilises.
+        # Mei's method: iterate model step at fixed velocity until `self.fi` converges.
 
         fi_old = np.empty_like(self.fi)
         number_of_iterations = 0
@@ -512,7 +616,8 @@ class FreeSurfaceModel(Model):
 
     def plot_fields(self, path=None):
         """
-        Plots heatmaps of `self.r`, `self.u`, `self.v`, and `self.phi` arrays.
+        Plot heatmaps of `self.r`, `self.u`, `self.v`, and `self.phi` arrays.
+
         Saves plot if a `path` is given.
         The plot can be displayed by calling `plt.show()`.
 
