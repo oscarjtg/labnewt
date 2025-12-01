@@ -97,11 +97,25 @@ class Model:
 
     def _set(self, data, source, *args):
         """
-        Sets data to values in source.
-        If source is callable (i.e. a function),
-        assume it has signature (x, y, *args)
-        and fill data with source(x, y, *args)
-        for coordinates (x, y) in self.x and self.y.
+        Sets `data` to `source` values.
+
+        Array `data` is modified in-place.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        data : np.ndarray
+            Array to be filled
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         if callable(source):
             X, Y = np.meshgrid(self.x, self.y)
@@ -112,34 +126,83 @@ class Model:
 
     def set_u(self, source, *args):
         """
-        Set x-component of velocity values, u.
-        If source is an array, set u to array values.
-        If source is a function with signature (x, y, *args),
-        set u to values evaluated by the function.
+        Set `self.u` (x-component of velocity) array values.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         self._set(self.u, source, *args)
 
     def set_v(self, source, *args):
         """
-        Set y-component of velocity values, v.
-        If source is an array, set v to array values.
-        If source is a function with signature (x, y, *args),
-        set v to values evaluated by the function.
+        Set `self.v` (y-component of velocity) array values.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         self._set(self.v, source, *args)
 
     def set_r(self, source, *args):
         """
-        Set density values, r.
-        If source is an array, set r to array values.
-        If source is a function with signature (x, y, *args),
-        set r to values evaluated by the function.
+        Set `self.r` (fluid density) array values.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have the same shape as `data`.
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         self._set(self.r, source, *args)
 
     def _set_f(self, source, *args):
         """
-        Sets fi and fo. For unit tests only. Should not be used.
+        Set `self.fi` and `self.fo` (incoming and outgoing distribution) array values.
+
+        This is a convenience method for unit tests. Should not be used otherwise.
+
+        - If `source` is callable, it must have signature (x, y, *args).
+        - If `source` is an array, it must have shape (nq, ny, nx).
+
+        Parameters
+        ----------
+        source : callable or np.ndarray
+            Callable or array to use to fill `data`
+        *args : Any, optional
+            Optional arguments for source if it is callable
+
+        Returns
+        -------
+        None
         """
         self._set(self.fi, source, *args)
         self._set(self.fo, source, *args)
