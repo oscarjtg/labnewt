@@ -32,7 +32,7 @@ def run_periodic_bathtub_model(g, nx, ny, nu, dx, dt, tf, j_surf, macros):
     phi[j_surf, :] = 0.5
     model.set_phi(phi)
 
-    model._initialise()
+    model.initialise()
 
     sim = Simulation(model, stop_time=tf)
     sim.run_to_steady_state(int(tf), rtol=1.0e-10)

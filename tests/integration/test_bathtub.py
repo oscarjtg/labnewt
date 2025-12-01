@@ -49,8 +49,6 @@ def test_bathtub_periodic(Macroscopic):
     rho -= 3 * g * (JJ - j_surf) * dx
     model.set_r(rho)
 
-    model._initialise()
-
     u0 = np.copy(model.u)
     v0 = np.copy(model.v)
     r0 = np.copy(model.r)
