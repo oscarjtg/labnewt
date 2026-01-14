@@ -422,6 +422,8 @@ class FreeSurfaceModel(Model):
     collider : Collider
     macros : Macroscopic
     refiller : Refiller
+    vof : VolumeOfFluid
+    fsbc : FreeSurface
     nx : int
         Integer number of grid cells in x direction.
     ny : int
@@ -523,7 +525,7 @@ class FreeSurfaceModel(Model):
             Macroscopic object, which contains methods for computing fluid properties.
             Default is `MacroscopicStandard`
         refiller : Refiller, optional
-            Refiller objects, which provides the refilling scheme for `VolumeOfFluid`.
+            Refiller object, which provides the refilling scheme for `VolumeOfFluid`.
             Default is `UniformRefiller(1.0, 0.0, 0.0)`
         quiet : bool, optional
             If `False`, print progress while model runs. Otherwise, don't.
